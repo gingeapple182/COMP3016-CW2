@@ -99,8 +99,21 @@ float lastFrame = 0.0f;
 constexpr float WORLD_SCALE = 1.0f;
 
 // Asset-specific scale values (relative to WORLD_SCALE)
-constexpr float ROCK_SCALE = WORLD_SCALE * 0.0075f;
+constexpr float CAVE_SCALE = WORLD_SCALE * 0.5f;
 constexpr float TREE_SCALE = WORLD_SCALE * 0.12f;
+
+// Converts Blender world coordinates to OpenGL world coordinates
+// Blender: X = left/right, Y = forward, Z = up
+// OpenGL:  X = left/right, Y = up,      Z = -forward
+vec3 BlenderToOpenGL(float bx, float by, float bz)
+{
+    return vec3(
+        bx,     // X stays X
+        bz,     // Blender Z (up) -> OpenGL Y (up)
+        -by      // Blender Y (forward) -> OpenGL -Z (forward)
+    );
+}
+
 
 int main()
 {
@@ -145,8 +158,11 @@ int main()
     // LearnOpenGL handles VAOs/VBOs internally for models.
     // -----------------------------------------------------------------------------
     Shader Shaders("shaders/vertexShader.vert", "shaders/fragmentShader.frag");
-    Model Rock("media/rock/Rock07-Base.obj");
-    Model Tree("media/tree/GenTree-103_AE3D_03122023-F1.obj");
+    // Cave walls
+    Model CaveWall1_A("media/cave/CaveWalls1/CaveWalls1_A.obj");
+    Model CaveWall1_B("media/cave/CaveWalls1/CaveWalls1_B.obj");
+    Model CaveWall1_C("media/cave/CaveWalls1/CaveWalls1_C.obj");
+    Model CaveWall1_D("media/cave/CaveWalls1/CaveWalls1_D.obj");
 
     Shaders.use();
 
@@ -224,37 +240,32 @@ int main()
         // ---------------------------------------------------------------------
         vec3 treeBasePosition = vec3(3.0f, -2.0f, -1.5f);
 
-        // Local-space offsets around the tree base
-        vec3 rockPositions[] = {
-            vec3(0.8f, 0.0f,  0.4f),
-            vec3(-0.6f, 0.0f,  0.9f),
-            vec3(0.5f, 0.0f, -0.7f),
-            vec3(-0.9f, 0.0f, -0.3f)
-        };
+        // ---------------------------------------------------------------------
+        // CAVE WALLS – TEST PLACEMENT
+        // -----------------------------------------------------------------------------
 
-        // ---------------------------------------------------------------------
-        // ROCKS
-        // ---------------------------------------------------------------------
-        for (int i = 0; i < 4; i++)
-        {
-            // IMPORTANT: model must be reset per object
-            model = mat4(1.0f);
-            model = translate(model, treeBasePosition + rockPositions[i]);
-            model = scale(model, vec3(ROCK_SCALE));
-
-            SetMatrices(Shaders);
-            Rock.Draw(Shaders);
-        }
-
-        // ---------------------------------------------------------------------
-        // TREE
-        // ---------------------------------------------------------------------
+        // Wall B
         model = mat4(1.0f);
-        model = translate(model, treeBasePosition);
-        model = scale(model, vec3(TREE_SCALE));
-
+        model = translate(model, BlenderToOpenGL(-13.55f, 38.5f, 0.0f));
+        model = scale(model, vec3(CAVE_SCALE));
         SetMatrices(Shaders);
-        Tree.Draw(Shaders);
+        CaveWall1_B.Draw(Shaders);
+
+        // Wall C
+        model = mat4(1.0f);
+        model = translate(model, BlenderToOpenGL(-29.30f, 27.96f, 0.0f));
+        model = rotate(model, radians(62.62f), vec3(0, 1, 0));
+        model = scale(model, vec3(CAVE_SCALE));
+        SetMatrices(Shaders);
+        CaveWall1_C.Draw(Shaders);
+
+        // Wall D
+        model = mat4(1.0f);
+        model = translate(model, BlenderToOpenGL(6.36f, 28.76f, 0.0f));
+        model = scale(model, vec3(CAVE_SCALE));
+        SetMatrices(Shaders);
+        CaveWall1_D.Draw(Shaders);
+
 
         // Swap buffers & poll events
         glfwSwapBuffers(window);
@@ -335,3 +346,4 @@ void SetMatrices(Shader& ShaderProgramIn)
     mvp = projection * view * model;
     ShaderProgramIn.setMat4("mvpIn", mvp);
 }
+

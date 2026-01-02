@@ -56,12 +56,4 @@
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="media\woodPlanks.jpg">
-      <Filter>media</Filter>
-    </Image>
-    <Image Include="media\neo-matrix.jpg">
-      <Filter>media</Filter>
-    </Image>
-  </ItemGroup>
 </Project>

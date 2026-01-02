@@ -1,0 +1,15 @@
+# Blender MTL File: 'temple of apollo.blend'
+# Material Count: 1
+
+newmtl Material.001
+Ns 115.686275
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.752325 0.752325
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Bump C:\\Users\\cipri\\Desktop\\ruins\\blend\\textures\\normal.png
+map_Kd C:\\Users\\cipri\\Desktop\\ruins\\blend\\textures\\map.png
+map_Ks C:\\Users\\cipri\\Desktop\\ruins\\blend\\textures\\spec.png

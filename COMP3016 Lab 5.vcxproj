@@ -148,10 +148,6 @@
     <None Include="shaders\fragmentShader.frag" />
     <None Include="shaders\vertexShader.vert" />
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="media\neo-matrix.jpg" />
-    <Image Include="media\woodPlanks.jpg" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
