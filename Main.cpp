@@ -100,6 +100,7 @@ constexpr float WORLD_SCALE = 1.0f;
 
 // Asset-specific scale values (relative to WORLD_SCALE)
 constexpr float CAVE_SCALE = WORLD_SCALE * 0.5f;
+constexpr float PLATFORM_SCALE = WORLD_SCALE * 1.5f;
 constexpr float RUIN_SCALE = WORLD_SCALE * 1.0f;
 constexpr float STATUE_SCALE = WORLD_SCALE * 0.2f;
 
@@ -313,7 +314,116 @@ std::vector<InstanceTransform> caveWall4_DPositions = {
     }
 };
 
-// Platforms
+// Platforms -- ceiling
+
+std::vector<InstanceTransform> cavePlatform2_1Positions = {
+    {
+        BlenderToOpenGL(4.76f, 28.36f, 14.50f),
+        279.00f,
+        vec3(PLATFORM_SCALE)
+    }
+};
+
+std::vector<InstanceTransform> cavePlatform2_2Positions = {
+    {
+        BlenderToOpenGL(15.93f, 154.37f, 15.00f),
+        29.00f,
+        vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(-38.04f, 139.17f, 14.00f),
+        41.00f,
+        vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(62.10f, 133.82f, 14.00f),
+        221.00f,
+        vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(86.50f, 126.87f, 15.00f),
+        128.00f,
+        vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(60.87f, 84.09f, 14.50f),
+        242.00f,
+        vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(4.83f, 110.31f, 14.50f),
+        221.00f,
+        vec3(PLATFORM_SCALE)
+    }
+};
+
+std::vector<InstanceTransform> cavePlatform2_4Positions = {
+    {
+        BlenderToOpenGL(22.04f, 77.04f, 14.00f),
+        40.00f,
+        vec3(PLATFORM_SCALE)
+    }
+};
+
+
+// Platforms -- floors
+
+std::vector<InstanceTransform> cavePlatform2_2FloorPositions = {
+    {
+        BlenderToOpenGL(15.93f, 154.37f, -14.99f),
+        29.00f,
+        vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(-38.04f, 139.17f, -15.99f),
+        41.00f,
+        vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(62.10f, 133.82f, -15.99f),
+        221.00f,
+        vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(86.50f, 126.87f, -14.99f),
+        128.00f,
+        vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(60.87f, 84.09f, -15.49f),
+        242.00f,
+        vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(4.83f, 110.31f, -15.49f),
+        221.00f,
+        vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(6.18f, 35.50f, -14.99f),
+        117.00f,
+        vec3(PLATFORM_SCALE)
+    }
+};
+
+std::vector<InstanceTransform> cavePlatform2_4FloorPositions = {
+    {
+        BlenderToOpenGL(22.04f, 77.04f, -14.64f),
+        40.00f,
+        vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(32.27f, 57.62f, -14.14f),
+        40.00f,
+        vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(45.00f, 123.82f, -13.96f),
+        -21.00f,
+        vec3(PLATFORM_SCALE)
+    }
+};
+
 
 
 // Temple
@@ -438,7 +548,7 @@ int main()
         radians(45.0f),
         (float)windowWidth / (float)windowHeight,
         0.1f,
-        100.0f
+        200.0f
     );
 
     // -------------------------------------------------------------------------
@@ -573,6 +683,54 @@ int main()
         }
 
         // Platforms
+        for (const auto& instance : cavePlatform2_1Positions) {
+            model = mat4(1.0f);
+            model = translate(model, instance.position);
+            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
+            model = scale(model, instance.scale);
+            SetMatrices(Shaders);
+            CavePlatform2_1.Draw(Shaders);
+        }
+
+        for (const auto& instance : cavePlatform2_2Positions) {
+            model = mat4(1.0f);
+            model = translate(model, instance.position);
+            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
+            model = scale(model, instance.scale);
+            SetMatrices(Shaders);
+            CavePlatform2_2.Draw(Shaders);
+        }
+
+        for (const auto& instance : cavePlatform2_4Positions) {
+            model = mat4(1.0f);
+            model = translate(model, instance.position);
+            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
+            model = scale(model, instance.scale);
+            SetMatrices(Shaders);
+            CavePlatform2_4.Draw(Shaders);
+        }
+
+        for (const auto& inst : cavePlatform2_2FloorPositions)
+        {
+            model = mat4(1.0f);
+            model = translate(model, inst.position);
+            model = rotate(model, radians(inst.rotationY), vec3(0, 1, 0));
+            model = scale(model, inst.scale);
+
+            SetMatrices(Shaders);
+            CavePlatform2_2.Draw(Shaders);
+        }
+
+        for (const auto& inst : cavePlatform2_4FloorPositions)
+        {
+            model = mat4(1.0f);
+            model = translate(model, inst.position);
+            model = rotate(model, radians(inst.rotationY), vec3(0, 1, 0));
+            model = scale(model, inst.scale);
+
+            SetMatrices(Shaders);
+            CavePlatform2_4.Draw(Shaders);
+        }
 
         // Temple
         for (const auto& instance : templePositions) {
