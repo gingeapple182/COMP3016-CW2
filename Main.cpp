@@ -100,7 +100,8 @@ constexpr float WORLD_SCALE = 1.0f;
 
 // Asset-specific scale values (relative to WORLD_SCALE)
 constexpr float CAVE_SCALE = WORLD_SCALE * 0.5f;
-constexpr float TREE_SCALE = WORLD_SCALE * 0.12f;
+constexpr float RUIN_SCALE = WORLD_SCALE * 1.0f;
+constexpr float STATUE_SCALE = WORLD_SCALE * 0.2f;
 
 // Converts Blender world coordinates to OpenGL world coordinates
 // Blender: X = left/right, Y = forward, Z = up
@@ -113,6 +114,223 @@ vec3 BlenderToOpenGL(float bx, float by, float bz)
         -by      // Blender Y (forward) -> OpenGL -Z (forward)
     );
 }
+
+// 
+struct InstanceTransform
+{
+    vec3 position;     // OpenGL world position
+    float rotationY;   // Y-axis rotation in degrees (Blender Z)
+    vec3 scale;        // Usually uniform
+};
+
+// -----------------------------------------------------------------------------
+// Asset locations
+// -----------------------------------------------------------------------------
+
+std::vector<InstanceTransform> caveWall1_APositions = {
+    {
+        BlenderToOpenGL(16.82f, 96.48f, 0.00f),
+        0.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(42.46f, 86.03f, 0.00f),
+        0.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(27.51f, 120.49f, 0.00f),
+        0.00f,
+        vec3(CAVE_SCALE)
+    }
+};
+
+std::vector<InstanceTransform> caveWall1_BPositions = {
+    {
+        BlenderToOpenGL(-2.81f, 138.38f, 0.00f),
+        199.00f,
+        vec3(CAVE_SCALE)
+    }
+};
+
+std::vector<InstanceTransform> caveWall1_CPositions = {
+    {
+        BlenderToOpenGL(3.95f, 66.21f, 0.00f),
+        60.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(-57.57f, 149.02f, 0.00f),
+        60.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(-38.99f, 113.24f, 0.00f),
+        158.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(80.91f, 149.79f, 0.00f),
+        -13.00f,
+        vec3(CAVE_SCALE)
+    }
+};
+
+std::vector<InstanceTransform> caveWall1_DPositions = {
+    {
+        BlenderToOpenGL(-11.23f, 125.48f, 0.00f),
+        69.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(-19.33f, 104.81f, 0.00f),
+        159.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(59.19f, 150.46f, 0.00f),
+        340.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(-56.86f, 129.93f, 0.00f),
+        159.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(80.85f, 77.62f, 0.00f),
+        249.00f,
+        vec3(CAVE_SCALE)
+    }
+};
+
+std::vector<InstanceTransform> caveWall2_APositions = {
+    {
+        BlenderToOpenGL(0.00f, 0.00f, 0.00f),
+        0.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(49.74f, 140.21f, 0.00f),
+        163.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(18.31f, 65.78f, 0.00f),
+        152.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(73.03f, 86.96f, 0.00f),
+        248.75f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(-2.98f, 119.03f, 0.00f),
+        248.00f,
+        vec3(CAVE_SCALE)
+    }
+};
+
+std::vector<InstanceTransform> caveWall2_BPositions = {
+    {
+        BlenderToOpenGL(21.24f, -13.29f, 0.00f),
+        294.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(-22.12f, -13.29f, 0.00f),
+        242.00f,
+        vec3(CAVE_SCALE)
+    }
+};
+
+std::vector<InstanceTransform> caveWall2_CPositions = {
+    {
+        BlenderToOpenGL(50.12f, 66.44f, 0.00f),
+        250.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(71.21f, 119.85f, 0.00f),
+        340.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(-0.34f, 89.78f, 0.00f),
+        160.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(19.94f, 137.42f, 0.00f),
+        70.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(99.52f, 129.61f, 0.00f),
+        340.00f,
+        vec3(CAVE_SCALE)
+    }
+};
+
+std::vector<InstanceTransform> caveWall3Positions = {
+    {
+        BlenderToOpenGL(-12.00f, 32.00f, 0.00f),
+        75.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(19.00f, 32.00f, 0.00f),
+        75.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(24.44f, 169.37f, 0.00f),
+        354.00f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(100.01f, 96.51f, 0.00f),
+        67.00f,
+        vec3(CAVE_SCALE)
+    }
+};
+
+
+std::vector<InstanceTransform> caveWall4_APositions = {
+    {
+        BlenderToOpenGL(-35.79f, 162.31f, 0.00f),
+        13.00f,
+        vec3(CAVE_SCALE)
+    }
+};
+
+std::vector<InstanceTransform> caveWall4_DPositions = {
+    {
+        BlenderToOpenGL(53.34f, 107.70f, -5.03f),
+        0.00f,
+        vec3(CAVE_SCALE)
+    }
+};
+
+// Platforms
+
+
+// Temple
+std::vector<InstanceTransform> templePositions = {
+    {
+        BlenderToOpenGL(-36.20f, 122.53f, -7.33f),
+        116.00f,
+        vec3(RUIN_SCALE)
+    },
+    {
+        BlenderToOpenGL(-52.09f, 135.41f, -7.33f),
+        26.00f,
+        vec3(RUIN_SCALE)
+    }
+};
+
+
 
 
 int main()
@@ -158,11 +376,31 @@ int main()
     // LearnOpenGL handles VAOs/VBOs internally for models.
     // -----------------------------------------------------------------------------
     Shader Shaders("shaders/vertexShader.vert", "shaders/fragmentShader.frag");
-    // Cave walls
+    // Cave walls 
     Model CaveWall1_A("media/cave/CaveWalls1/CaveWalls1_A.obj");
     Model CaveWall1_B("media/cave/CaveWalls1/CaveWalls1_B.obj");
     Model CaveWall1_C("media/cave/CaveWalls1/CaveWalls1_C.obj");
     Model CaveWall1_D("media/cave/CaveWalls1/CaveWalls1_D.obj");
+
+	Model CaveWall2_A("media/cave/CaveWalls2/CaveWalls2_A.obj"); 
+	Model CaveWall2_B("media/cave/CaveWalls2/CaveWalls2_B.obj");
+	Model CaveWall2_C("media/cave/CaveWalls2/CaveWalls2_C.obj"); 
+
+	Model CaveWall3("media/cave/CaveWalls3/CaveWalls3.obj");
+
+	Model CaveWall4_A("media/cave/CaveWalls4/CaveWalls4_A.obj"); 
+	Model CaveWall4_B("media/cave/CaveWalls4/CaveWalls4_B.obj"); 
+	Model CaveWall4_C("media/cave/CaveWalls4/CaveWalls4_C.obj"); 
+	Model CaveWall4_D("media/cave/CaveWalls4/CaveWalls4_D.obj"); 
+
+	// Cave platforms
+    Model CavePlatform2_1("media/cave/CavePlatform2/CavePlatform2_1.obj");
+	Model CavePlatform2_2("media/cave/CavePlatform2/CavePlatform2_2.obj"); 
+	Model CavePlatform2_3("media/cave/CavePlatform2/CavePlatform2_3.obj");
+	Model CavePlatform2_4("media/cave/CavePlatform2/CavePlatform2_4.obj"); 
+
+    // Ruins
+	Model TempleOfApollo("media/ruins/temple of apollo.obj");
 
     Shaders.use();
 
@@ -241,30 +479,117 @@ int main()
         vec3 treeBasePosition = vec3(3.0f, -2.0f, -1.5f);
 
         // ---------------------------------------------------------------------
-        // CAVE WALLS – TEST PLACEMENT
-        // -----------------------------------------------------------------------------
+        // CAVE WALLS 
+        // ---------------------------------------------------------------------
 
-        // Wall B
-        model = mat4(1.0f);
-        model = translate(model, BlenderToOpenGL(-13.55f, 38.5f, 0.0f));
-        model = scale(model, vec3(CAVE_SCALE));
-        SetMatrices(Shaders);
-        CaveWall1_B.Draw(Shaders);
+        for (const auto& instance : caveWall1_APositions) {
+            model = mat4(1.0f);
+			model = translate(model, instance.position);
+			model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
+			model = scale(model, instance.scale);
+			SetMatrices(Shaders);
+			CaveWall1_A.Draw(Shaders);
+        }
 
-        // Wall C
-        model = mat4(1.0f);
-        model = translate(model, BlenderToOpenGL(-29.30f, 27.96f, 0.0f));
-        model = rotate(model, radians(62.62f), vec3(0, 1, 0));
-        model = scale(model, vec3(CAVE_SCALE));
-        SetMatrices(Shaders);
-        CaveWall1_C.Draw(Shaders);
+        for (const auto& instance : caveWall1_BPositions) {
+            model = mat4(1.0f);
+            model = translate(model, instance.position);
+            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
+            model = scale(model, instance.scale);
+            SetMatrices(Shaders);
+            CaveWall1_B.Draw(Shaders);
+        }
+        
+        for (const auto& instance : caveWall1_CPositions) {
+            model = mat4(1.0f);
+            model = translate(model, instance.position);
+            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
+            model = scale(model, instance.scale);
+            SetMatrices(Shaders);
+            CaveWall1_C.Draw(Shaders);
+        }
 
-        // Wall D
-        model = mat4(1.0f);
-        model = translate(model, BlenderToOpenGL(6.36f, 28.76f, 0.0f));
-        model = scale(model, vec3(CAVE_SCALE));
-        SetMatrices(Shaders);
-        CaveWall1_D.Draw(Shaders);
+        for (const auto& instance : caveWall1_DPositions) {
+            model = mat4(1.0f);
+            model = translate(model, instance.position);
+            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
+            model = scale(model, instance.scale);
+            SetMatrices(Shaders);
+            CaveWall1_D.Draw(Shaders);
+        }
+
+        for (const auto& instance : caveWall2_APositions) {
+            model = mat4(1.0f);
+            model = translate(model, instance.position);
+            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
+            model = scale(model, instance.scale);
+            SetMatrices(Shaders);
+            CaveWall2_A.Draw(Shaders);
+        }
+
+        for (const auto& instance : caveWall2_BPositions) {
+            model = mat4(1.0f);
+            model = translate(model, instance.position);
+            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
+            model = scale(model, instance.scale);
+            SetMatrices(Shaders);
+            CaveWall2_B.Draw(Shaders);
+        }
+
+        for (const auto& instance : caveWall2_CPositions) {
+            model = mat4(1.0f);
+            model = translate(model, instance.position);
+            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
+            model = scale(model, instance.scale);
+            SetMatrices(Shaders);
+            CaveWall2_C.Draw(Shaders);
+        }
+
+        for (const auto& instance : caveWall3Positions) {
+            model = mat4(1.0f);
+            model = translate(model, instance.position);
+            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
+            model = scale(model, instance.scale);
+            SetMatrices(Shaders);
+            CaveWall3.Draw(Shaders);
+        }
+
+        for (const auto& instance : caveWall4_APositions) {
+            model = mat4(1.0f);
+            model = translate(model, instance.position);
+            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
+            model = scale(model, instance.scale);
+            SetMatrices(Shaders);
+            CaveWall4_A.Draw(Shaders);
+        }
+
+        for (const auto& instance : caveWall4_DPositions) {
+            model = mat4(1.0f);
+            model = translate(model, instance.position);
+            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
+            model = scale(model, instance.scale);
+            SetMatrices(Shaders);
+            CaveWall4_D.Draw(Shaders);
+        }
+
+        // Platforms
+
+        // Temple
+        for (const auto& instance : templePositions) {
+            model = mat4(1.0f);
+            model = translate(model, instance.position);
+            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
+            model = scale(model, instance.scale);
+            SetMatrices(Shaders);
+            TempleOfApollo.Draw(Shaders);
+        }
+
+
+
+
+
+
+
 
 
         // Swap buffers & poll events
@@ -321,7 +646,7 @@ void ProcessUserInput(GLFWwindow* WindowIn)
     if (glfwGetKey(WindowIn, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(WindowIn, true);
 
-    const float movementSpeed = 1.0f * deltaTime;
+    const float movementSpeed = 10.0f * deltaTime;
 
     if (glfwGetKey(WindowIn, GLFW_KEY_W) == GLFW_PRESS)
         cameraPosition += movementSpeed * cameraFront;
