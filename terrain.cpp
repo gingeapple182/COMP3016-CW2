@@ -1,4 +1,5 @@
 #include "terrain.h"
+#include "FastNoiseLite.h"
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -38,6 +39,12 @@ void InitialiseTerrain(TerrainInstance& terrain, bool inverted)
     float zOffset = 0.0f;
     int rowIndex = 0;
 
+    FastNoiseLite noise;
+    noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+    noise.SetFrequency(0.25f);   // large, soft dunes
+    noise.SetSeed(1337);         // fixed seed = stable terrain
+
+
     for (int i = 0; i < mapSize; i++)
     {
         int v = i * 6;
@@ -53,12 +60,34 @@ void InitialiseTerrain(TerrainInstance& terrain, bool inverted)
             ? glm::mix(terrain.bowlHeight, terrain.bowlDepth, smoothT) // cap
             : glm::mix(terrain.bowlDepth, terrain.bowlHeight, smoothT); // bowl
 
+        // --- Perlin noise (sand roughness) ---
+        float noiseValue = noise.GetNoise(
+            xOffset * 0.1f,
+            zOffset * 0.1f
+        );
+
+        // Strength of sand variation
+        constexpr float NOISE_STRENGTH = 4.5f;
+
+        // Fade noise near the cave centre so it stays readable
+        float noiseFalloff = smoothT; // 0 at centre, 1 at edges
+
+        height += noiseValue * NOISE_STRENGTH * noiseFalloff;
+
         vertices[v + 1] = height;
 
-        // sandy colour
-        vertices[v + 3] = 0.85f;
-        vertices[v + 4] = 0.80f;
-        vertices[v + 5] = 0.55f;
+        // Sand colour with noise variation
+        float sandShade = 0.8f + noiseValue * 0.05f;
+
+        // Slope-based tint
+        float slopeTint = 1.0f - smoothT * 0.15f;
+        slopeTint = glm::clamp(slopeTint, 0.7f, 1.0f);
+
+        vertices[v + 3] = sandShade * slopeTint;
+        vertices[v + 4] = sandShade * 0.95f * slopeTint;
+        vertices[v + 5] = sandShade * 0.7f * slopeTint;
+
+
 
         xOffset += terrain.spacing;
         rowIndex++;

@@ -108,7 +108,7 @@ constexpr float STATUE_SCALE = WORLD_SCALE * 0.2f;
 // ---------------------------------------------------------------------
 // SCENE ANCHOR
 // ---------------------------------------------------------------------
-const vec3 LEVEL_OFFSET = vec3(0.0f, -30.0f, 50.0f);
+const vec3 LEVEL_OFFSET = vec3(0.0f, -30.0f, 100.0f);
 
 // Converts Blender world coordinates to OpenGL world coordinates
 // Blender: X = left/right, Y = forward, Z = up
@@ -564,7 +564,7 @@ int main()
         radians(45.0f),
         (float)windowWidth / (float)windowHeight,
         0.1f,
-        500.0f
+        700.0f
     );
 
     // -------------------------------------------------------------------------
@@ -802,11 +802,6 @@ int main()
             SetMatrices(Shaders);
             TempleOfApollo.Draw(Shaders);
         }
-
-
-
-
-
 
 
 
