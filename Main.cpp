@@ -19,6 +19,7 @@
 
 //GENERAL
 #include "main.h"
+#include "terrain.h"
 
 using namespace std;
 using namespace glm;
@@ -480,12 +481,18 @@ int main()
     // Enable depth testing so closer objects obscure farther ones
     glEnable(GL_DEPTH_TEST);
 
+
+    // Terrain
+    InitialiseTerrain();
+
+
     // -------------------------------------------------------------------------
     // SHADERS & MODELS
     //
     // LearnOpenGL handles VAOs/VBOs internally for models.
     // -----------------------------------------------------------------------------
     Shader Shaders("shaders/vertexShader.vert", "shaders/fragmentShader.frag");
+	Shader terrainShaders("shaders/terrain.vert", "shaders/terrain.frag");
     // Cave walls 
     Model CaveWall1_A("media/cave/CaveWalls1/CaveWalls1_A.obj");
     Model CaveWall1_B("media/cave/CaveWalls1/CaveWalls1_B.obj");
@@ -589,8 +596,25 @@ int main()
         vec3 treeBasePosition = vec3(3.0f, -2.0f, -1.5f);
 
         // ---------------------------------------------------------------------
+        // TERRAIN
+        // ---------------------------------------------------------------------
+        terrainShaders.use();
+
+        // reset model for terrain (prevents inheriting cave rotations/transforms)
+        model = mat4(1.0f);
+
+        // centre it (we’ll define the half-size function below)
+        model = translate(model, vec3(-TerrainHalfSize(), 0.0f, -TerrainHalfSize()));
+
+        SetMatrices(terrainShaders);
+        DrawTerrain(terrainShaders);
+
+
+
+        // ---------------------------------------------------------------------
         // CAVE WALLS 
         // ---------------------------------------------------------------------
+        Shaders.use();
 
         for (const auto& instance : caveWall1_APositions) {
             model = mat4(1.0f);
@@ -804,7 +828,7 @@ void ProcessUserInput(GLFWwindow* WindowIn)
     if (glfwGetKey(WindowIn, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(WindowIn, true);
 
-    const float movementSpeed = 10.0f * deltaTime;
+    const float movementSpeed = 50.0f * deltaTime;
 
     if (glfwGetKey(WindowIn, GLFW_KEY_W) == GLFW_PRESS)
         cameraPosition += movementSpeed * cameraFront;

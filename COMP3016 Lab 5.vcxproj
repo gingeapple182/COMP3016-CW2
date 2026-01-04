@@ -137,15 +137,19 @@
     <ClInclude Include="main.h" />
     <ClInclude Include="shaders\LoadShaders.h" />
     <ClInclude Include="stb_image.h" />
+    <ClInclude Include="terrain.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glad.c" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="shaders\LoadShaders.cpp" />
     <ClCompile Include="stbImageLoader.cpp" />
+    <ClCompile Include="terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\fragmentShader.frag" />
+    <None Include="shaders\terrain.frag" />
+    <None Include="shaders\terrain.vert" />
     <None Include="shaders\vertexShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

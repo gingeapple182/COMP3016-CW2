@@ -33,6 +33,9 @@
     <ClInclude Include="FastNoiseLite.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="terrain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="shaders\LoadShaders.cpp">
@@ -47,12 +50,21 @@
     <ClCompile Include="glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="terrain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\vertexShader.vert">
       <Filter>shaders</Filter>
     </None>
     <None Include="shaders\fragmentShader.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\terrain.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\terrain.vert">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>
