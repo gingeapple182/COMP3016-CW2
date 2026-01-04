@@ -105,6 +105,11 @@ constexpr float PLATFORM_SCALE = WORLD_SCALE * 1.5f;
 constexpr float RUIN_SCALE = WORLD_SCALE * 1.0f;
 constexpr float STATUE_SCALE = WORLD_SCALE * 0.2f;
 
+// ---------------------------------------------------------------------
+// SCENE ANCHOR
+// ---------------------------------------------------------------------
+const vec3 LEVEL_OFFSET = vec3(0.0f, -30.0f, 50.0f);
+
 // Converts Blender world coordinates to OpenGL world coordinates
 // Blender: X = left/right, Y = forward, Z = up
 // OpenGL:  X = left/right, Y = up,      Z = -forward
@@ -483,7 +488,25 @@ int main()
 
 
     // Terrain
-    InitialiseTerrain();
+    TerrainInstance terrainCap;
+    TerrainInstance terrainBowl;
+
+    terrainCap.renderDist = 256;
+    terrainCap.spacing = 1.0f;
+    terrainCap.bowlRadius = 140.0f;
+    terrainCap.bowlDepth = -18.0f;
+    terrainCap.bowlHeight = 25.0f;
+    terrainCap.center = glm::vec2(128.0f, 128.0f);
+
+    terrainBowl.renderDist = 1024;
+    terrainBowl.spacing = 2.0f;
+    terrainBowl.bowlRadius = 800.0f;
+    terrainBowl.bowlDepth = -40.0f;
+    terrainBowl.bowlHeight = 60.0f;
+    terrainBowl.center = glm::vec2(1024.0f, 1024.0f);
+
+    InitialiseTerrain(terrainCap, true);   // inverted
+    InitialiseTerrain(terrainBowl, false); // normal bowl
 
 
     // -------------------------------------------------------------------------
@@ -528,34 +551,20 @@ int main()
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
 
-    // -------------------------------------------------------------------------
-    // MODEL TRANSFORM REFERENCE
-    //
-    // Standard per-object transform order:
-    //
-    // model = mat4(1.0f);                    // Reset to WORLD space
-    // model = translate(model, position);    // Place object in world
-    // model = rotate(model, angle, axis);    // Optional rotation
-    // model = scale(model, vec3(ASSET_SCALE)); // Convert asset units ? world units
-    //
-    // IMPORTANT:
-    // - Always reset model per object
-    // - Never "undo" transforms — reset instead
-    // -----------------------------------------------------------------------------
+    
 
     // -------------------------------------------------------------------------
     // PROJECTION MATRIX
-    //
-    // FOV        : 45 degrees
-    // Aspect     : window width / height
-    // Near plane : 0.1
-    // Far plane  : 100.0
+    //  FOV
+    //  Aspect
+    //  Near plane
+    //  Far plane
     // -----------------------------------------------------------------------------
     projection = perspective(
         radians(45.0f),
         (float)windowWidth / (float)windowHeight,
         0.1f,
-        200.0f
+        500.0f
     );
 
     // -------------------------------------------------------------------------
@@ -586,30 +595,42 @@ int main()
             cameraPosition + cameraFront,
             cameraUp
         );
-
-        // ---------------------------------------------------------------------
-        // SCENE ANCHOR
-        //
-        // The tree acts as a spatial anchor.
-        // Rocks are positioned using offsets from this point.
-        // ---------------------------------------------------------------------
-        vec3 treeBasePosition = vec3(3.0f, -2.0f, -1.5f);
-
+        
         // ---------------------------------------------------------------------
         // TERRAIN
         // ---------------------------------------------------------------------
         terrainShaders.use();
 
-        // reset model for terrain (prevents inheriting cave rotations/transforms)
+        // Large bowl first
         model = mat4(1.0f);
-
-        // centre it (we’ll define the half-size function below)
-        model = translate(model, vec3(-TerrainHalfSize(), 0.0f, -TerrainHalfSize()));
-
+        model = translate(model, vec3(-terrainBowl.center.x, 0.0f, -terrainBowl.center.y));
         SetMatrices(terrainShaders);
-        DrawTerrain(terrainShaders);
+        DrawTerrain(terrainBowl);
+
+        // Cap on top
+        //model = mat4(1.0f);
+        //model = translate(model, vec3(-terrainCap.center.x, 0.0f, -terrainCap.center.y));
+        //SetMatrices(terrainShaders);
+        //DrawTerrain(terrainCap);
 
 
+        // -------------------------------------------------------------------------
+        // MODEL TRANSFORM REFERENCE
+        //
+        // Standard per-object transform order:
+        //
+        // model = mat4(1.0f);                      // Reset to WORLD space
+		// model = transform(model, LEVEL_OFFSET);  // Level anchor point
+        // model = translate(model, position);      // Place object in world
+        // model = rotate(model, angle, axis);      // Optional rotation
+		// model = scale(model, instance.scale);    // Uniform/non-uniform scale
+		// SetMatrices(Shaders);                    // Upload to GPU
+		// object.Draw(Shaders);                    // Render object
+        //
+        // IMPORTANT:
+        // - Always reset model per object
+        // - Never "undo" transforms — reset instead
+        // -----------------------------------------------------------------------------
 
         // ---------------------------------------------------------------------
         // CAVE WALLS 
@@ -618,6 +639,7 @@ int main()
 
         for (const auto& instance : caveWall1_APositions) {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET); 
 			model = translate(model, instance.position);
 			model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
 			model = scale(model, instance.scale);
@@ -627,6 +649,7 @@ int main()
 
         for (const auto& instance : caveWall1_BPositions) {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET); 
             model = translate(model, instance.position);
             model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
             model = scale(model, instance.scale);
@@ -636,6 +659,7 @@ int main()
         
         for (const auto& instance : caveWall1_CPositions) {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET); 
             model = translate(model, instance.position);
             model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
             model = scale(model, instance.scale);
@@ -645,6 +669,7 @@ int main()
 
         for (const auto& instance : caveWall1_DPositions) {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET);
             model = translate(model, instance.position);
             model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
             model = scale(model, instance.scale);
@@ -654,6 +679,7 @@ int main()
 
         for (const auto& instance : caveWall2_APositions) {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET);
             model = translate(model, instance.position);
             model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
             model = scale(model, instance.scale);
@@ -663,6 +689,7 @@ int main()
 
         for (const auto& instance : caveWall2_BPositions) {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET);
             model = translate(model, instance.position);
             model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
             model = scale(model, instance.scale);
@@ -672,6 +699,7 @@ int main()
 
         for (const auto& instance : caveWall2_CPositions) {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET);
             model = translate(model, instance.position);
             model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
             model = scale(model, instance.scale);
@@ -681,6 +709,7 @@ int main()
 
         for (const auto& instance : caveWall3Positions) {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET);
             model = translate(model, instance.position);
             model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
             model = scale(model, instance.scale);
@@ -690,6 +719,7 @@ int main()
 
         for (const auto& instance : caveWall4_APositions) {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET);
             model = translate(model, instance.position);
             model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
             model = scale(model, instance.scale);
@@ -699,6 +729,7 @@ int main()
 
         for (const auto& instance : caveWall4_DPositions) {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET);
             model = translate(model, instance.position);
             model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
             model = scale(model, instance.scale);
@@ -709,6 +740,7 @@ int main()
         // Platforms
         for (const auto& instance : cavePlatform2_1Positions) {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET);
             model = translate(model, instance.position);
             model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
             model = scale(model, instance.scale);
@@ -718,6 +750,7 @@ int main()
 
         for (const auto& instance : cavePlatform2_2Positions) {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET);
             model = translate(model, instance.position);
             model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
             model = scale(model, instance.scale);
@@ -727,6 +760,7 @@ int main()
 
         for (const auto& instance : cavePlatform2_4Positions) {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET);
             model = translate(model, instance.position);
             model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
             model = scale(model, instance.scale);
@@ -737,6 +771,7 @@ int main()
         for (const auto& inst : cavePlatform2_2FloorPositions)
         {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET);
             model = translate(model, inst.position);
             model = rotate(model, radians(inst.rotationY), vec3(0, 1, 0));
             model = scale(model, inst.scale);
@@ -748,6 +783,7 @@ int main()
         for (const auto& inst : cavePlatform2_4FloorPositions)
         {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET);
             model = translate(model, inst.position);
             model = rotate(model, radians(inst.rotationY), vec3(0, 1, 0));
             model = scale(model, inst.scale);
@@ -759,6 +795,7 @@ int main()
         // Temple
         for (const auto& instance : templePositions) {
             model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET);
             model = translate(model, instance.position);
             model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
             model = scale(model, instance.scale);

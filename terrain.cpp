@@ -1,17 +1,19 @@
 #include "terrain.h"
 
-#include <GLAD/glad.h>
+#include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <learnOpenGL/shader_m.h>
 
+#include <vector>
+#include <cmath>
 
 #define TERRAIN_RENDER_DIST 256
 #define TERRAIN_MAP_SIZE (TERRAIN_RENDER_DIST * TERRAIN_RENDER_DIST)
 constexpr float TERRAIN_SPACING = 1.0f;
 
-static GLuint terrainVAO = 0;
-static GLuint terrainVBO = 0;
-static GLuint terrainEBO = 0;
+//static GLuint terrainVAO = 0;
+//static GLuint terrainVBO = 0;
+//static GLuint terrainEBO = 0;
 
 static GLfloat terrainVertices[TERRAIN_MAP_SIZE][6];
 static GLuint terrainIndices[(TERRAIN_MAP_SIZE - 1) * (TERRAIN_RENDER_DIST - 1) * 2][3];
@@ -24,119 +26,114 @@ constexpr float BOWL_HEIGHT = 25.0f;
 
 
 
-void InitialiseTerrain()
+void InitialiseTerrain(TerrainInstance& terrain, bool inverted)
 {
-	float start = 0.0f;
-	float xOffset = start;
-	float yOffset = start;
+    const int mapSize = terrain.renderDist * terrain.renderDist;
 
-	int rowIndex = 0;
+    std::vector<GLfloat> vertices(mapSize * 6);
+    std::vector<GLuint> indices((terrain.renderDist - 1) *
+        (terrain.renderDist - 1) * 6);
 
-	for (int i = 0; i < TERRAIN_MAP_SIZE; i++)
-	{
-		// Position (XZ)
-		terrainVertices[i][0] = xOffset;
-		terrainVertices[i][2] = yOffset;
+    float xOffset = 0.0f;
+    float zOffset = 0.0f;
+    int rowIndex = 0;
 
-		// --- BOWL HEIGHT (PER VERTEX) ---
-		glm::vec2 caveCenter(TerrainHalfSize(), TerrainHalfSize());
-		glm::vec2 worldPos(xOffset, yOffset);
+    for (int i = 0; i < mapSize; i++)
+    {
+        int v = i * 6;
 
-		float distance = glm::length(worldPos - caveCenter);
-		float t = glm::clamp(distance / (BOWL_RADIUS * 1.0f), 0.0f, 1.0f);
-		float smoothT = pow(t, 1.5f); 
-		float height = glm::mix(BOWL_DEPTH, BOWL_HEIGHT, smoothT);
-		float edgeT = glm::clamp((distance - BOWL_RADIUS * 1.2f) / 40.0f, 0.0f, 1.0f);
-		height += edgeT * edgeT * 30.0f;
+        vertices[v + 0] = xOffset;
+        vertices[v + 2] = zOffset;
 
+        float distance = glm::length(glm::vec2(xOffset, zOffset) - terrain.center);
+        float t = glm::clamp(distance / terrain.bowlRadius, 0.0f, 1.0f);
+        float smoothT = t * t * (3.0f - 2.0f * t);
 
-		terrainVertices[i][1] = height;
+        float height = inverted
+            ? glm::mix(terrain.bowlHeight, terrain.bowlDepth, smoothT) // cap
+            : glm::mix(terrain.bowlDepth, terrain.bowlHeight, smoothT); // bowl
 
-		// Colour
-		terrainVertices[i][3] = 0.85f;
-		terrainVertices[i][4] = 0.8f;
-		terrainVertices[i][5] = 0.55f;
+        vertices[v + 1] = height;
 
-		// Advance grid
-		xOffset += TERRAIN_SPACING;
-		rowIndex++;
+        // sandy colour
+        vertices[v + 3] = 0.85f;
+        vertices[v + 4] = 0.80f;
+        vertices[v + 5] = 0.55f;
 
-		if (rowIndex == TERRAIN_RENDER_DIST)
-		{
-			rowIndex = 0;
-			xOffset = start;
-			yOffset += TERRAIN_SPACING;
-		}
-	}
+        xOffset += terrain.spacing;
+        rowIndex++;
 
+        if (rowIndex == terrain.renderDist)
+        {
+            rowIndex = 0;
+            xOffset = 0.0f;
+            zOffset += terrain.spacing;
+        }
+    }
 
-	// Generate quads
-	int squaresPerRow = TERRAIN_RENDER_DIST - 1;
-	int colOffset = 0;
-	int rowOffset = 0;
-	rowIndex = 0;
+    // indices (same logic you already have)
+    int idx = 0;
+    for (int z = 0; z < terrain.renderDist - 1; z++)
+    {
+        for (int x = 0; x < terrain.renderDist - 1; x++)
+        {
+            int topLeft = z * terrain.renderDist + x;
+            int topRight = topLeft + 1;
+            int bottomLeft = topLeft + terrain.renderDist;
+            int bottomRight = bottomLeft + 1;
 
-	int index = 0;
-	for (int i = 0; i < squaresPerRow * squaresPerRow; i++) {
-		// Triangle 1 (top-left, bottom-left, top-right)
-		terrainIndices[index][0] = colOffset + rowOffset;
-		terrainIndices[index][1] = colOffset + rowOffset + TERRAIN_RENDER_DIST;
-		terrainIndices[index][2] = colOffset + rowOffset + 1;
-		index++;
+            indices[idx++] = topLeft;
+            indices[idx++] = bottomLeft;
+            indices[idx++] = topRight;
 
-		// Triangle 2 (top-right, bottom-left, bottom-right)
-		terrainIndices[index][0] = colOffset + rowOffset + 1;
-		terrainIndices[index][1] = colOffset + rowOffset + TERRAIN_RENDER_DIST;
-		terrainIndices[index][2] = colOffset + rowOffset + TERRAIN_RENDER_DIST + 1;
-		index++;
+            indices[idx++] = topRight;
+            indices[idx++] = bottomLeft;
+            indices[idx++] = bottomRight;
+        }
+    }
 
+    // Upload
+    glGenVertexArrays(1, &terrain.VAO);
+    glGenBuffers(1, &terrain.VBO);
+    glGenBuffers(1, &terrain.EBO);
 
-		colOffset++;
-		rowIndex++;
+    glBindVertexArray(terrain.VAO);
 
-		if (rowIndex == squaresPerRow) {
-			rowIndex = 0;
-			colOffset = 0;
-			rowOffset += TERRAIN_RENDER_DIST;
-		}
-	}
+    glBindBuffer(GL_ARRAY_BUFFER, terrain.VBO);
+    glBufferData(GL_ARRAY_BUFFER,
+        vertices.size() * sizeof(GLfloat),
+        vertices.data(),
+        GL_STATIC_DRAW);
 
-	// Upload to GPU
-	glGenVertexArrays(1, &terrainVAO);
-	glGenBuffers(1, &terrainVBO);
-	glGenBuffers(1, &terrainEBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrain.EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+        indices.size() * sizeof(GLuint),
+        indices.data(),
+        GL_STATIC_DRAW);
 
-	glBindVertexArray(terrainVAO);
-	 
-	glBindBuffer(GL_ARRAY_BUFFER, terrainVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(terrainVertices), terrainVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(terrainIndices), terrainIndices, GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+        (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
-	// Positions
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	// Colours
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	glBindVertexArray(0);
+    glBindVertexArray(0);
 }
 
-void DrawTerrain(const Shader& shader)
+
+void DrawTerrain(const TerrainInstance& terrain)
 {
-	glBindVertexArray(terrainVAO);
+    glBindVertexArray(terrain.VAO);
 
-	int indexCount =
-		(TERRAIN_RENDER_DIST - 1) *
-		(TERRAIN_RENDER_DIST - 1) * 6;
+    int indexCount =
+        (terrain.renderDist - 1) *
+        (terrain.renderDist - 1) * 6;
 
-	glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
-
-	glBindVertexArray(0);
+    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
 }
+
 
 
 float TerrainHalfSize() {
