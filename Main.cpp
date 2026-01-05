@@ -114,6 +114,65 @@ constexpr float RUIN_SCALE = WORLD_SCALE * 1.0f;
 constexpr float STATUE_SCALE = WORLD_SCALE * 0.2f;
 
 // -----------------------------------------------------------------------------
+// COLLISION MESH STRUCTURE
+// -----------------------------------------------------------------------------
+struct CollisionMesh
+{
+    std::vector<glm::vec3> vertices;
+    std::vector<unsigned int> indices; // triangles (3 per face)
+};
+
+CollisionMesh LoadCollisionMesh(const std::string& path)
+{
+    CollisionMesh result;
+
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(
+        path,
+        aiProcess_Triangulate |
+        aiProcess_JoinIdenticalVertices |
+        aiProcess_GenNormals
+    );
+
+    if (!scene || !scene->HasMeshes())
+    {
+        std::cerr << "[COLLISION] Failed to load: " << path << std::endl;
+        return result;
+    }
+
+    // For now, assume ONE mesh per collision OBJ (true for your assets)
+    aiMesh* mesh = scene->mMeshes[0];
+
+    // Vertices
+    result.vertices.reserve(mesh->mNumVertices);
+    for (unsigned int i = 0; i < mesh->mNumVertices; ++i)
+    {
+        const aiVector3D& v = mesh->mVertices[i];
+        result.vertices.emplace_back(v.x, v.y, v.z);
+    }
+
+    // Indices (triangles)
+    for (unsigned int i = 0; i < mesh->mNumFaces; ++i)
+    {
+        const aiFace& face = mesh->mFaces[i];
+        if (face.mNumIndices == 3)
+        {
+            result.indices.push_back(face.mIndices[0]);
+            result.indices.push_back(face.mIndices[1]);
+            result.indices.push_back(face.mIndices[2]);
+        }
+    }
+
+    // Debug output
+    std::cout << "[COLLISION] Loaded " << path << std::endl;
+    std::cout << "  Vertices : " << result.vertices.size() << std::endl;
+    std::cout << "  Triangles: " << result.indices.size() / 3 << std::endl;
+
+    return result;
+}
+
+
+// -----------------------------------------------------------------------------
 // PLAYER STUFF
 // -----------------------------------------------------------------------------
 vec3 playerPosition = cameraPosition;
@@ -191,6 +250,104 @@ void DrawInstances(Shader& shader, Model& modelAsset, const std::vector<Instance
         modelAsset.Draw(shader);
     }
 }
+
+glm::mat4 BuildModelMatrix(
+    const InstanceTransform& inst,
+    const glm::vec3& levelOffset)
+{
+    glm::mat4 m(1.0f);
+
+    m = glm::translate(m, levelOffset);
+    m = glm::translate(m, inst.position);
+    m = glm::rotate(m, glm::radians(inst.rotationY), glm::vec3(0, 1, 0));
+    m = glm::scale(m, inst.scale);
+
+    return m;
+}
+
+std::vector<glm::vec3> TransformCollisionVertices(
+    const CollisionMesh& mesh,
+    const InstanceTransform& inst,
+    const glm::vec3& levelOffset)
+{
+    std::vector<glm::vec3> worldVerts;
+    worldVerts.reserve(mesh.vertices.size());
+
+    glm::mat4 modelMatrix = BuildModelMatrix(inst, levelOffset);
+
+    for (const glm::vec3& v : mesh.vertices)
+    {
+        glm::vec4 worldPos = modelMatrix * glm::vec4(v, 1.0f);
+        worldVerts.emplace_back(worldPos.x, worldPos.y, worldPos.z);
+    }
+
+    return worldVerts;
+}
+
+float DistancePointToSegmentXZ(
+    const glm::vec2& p,
+    const glm::vec2& a,
+    const glm::vec2& b)
+{
+    glm::vec2 ab = b - a;
+    float t = glm::dot(p - a, ab) / glm::dot(ab, ab);
+    t = glm::clamp(t, 0.0f, 1.0f);
+    glm::vec2 closest = a + t * ab;
+    return glm::length(p - closest);
+}
+
+bool CircleIntersectsTriangleXZ(
+    const glm::vec2& circleCenter,
+    float radius,
+    const glm::vec3& v0,
+    const glm::vec3& v1,
+    const glm::vec3& v2)
+{
+    glm::vec2 p(circleCenter);
+
+    glm::vec2 a(v0.x, v0.z);
+    glm::vec2 b(v1.x, v1.z);
+    glm::vec2 c(v2.x, v2.z);
+
+    // Check distance to triangle edges
+    if (DistancePointToSegmentXZ(p, a, b) <= radius) return true;
+    if (DistancePointToSegmentXZ(p, b, c) <= radius) return true;
+    if (DistancePointToSegmentXZ(p, c, a) <= radius) return true;
+
+    return false;
+}
+
+bool CheckWallCollision_CaveWall2_C(
+    const glm::vec3& playerPos,
+    const CollisionMesh& mesh,
+    const std::vector<InstanceTransform>& instances,
+    float radius,
+    const glm::vec3& levelOffset)
+{
+    glm::vec2 playerXZ(playerPos.x, playerPos.z);
+
+    for (const auto& inst : instances)
+    {
+        // Transform mesh into world space for this instance
+        std::vector<glm::vec3> verts =
+            TransformCollisionVertices(mesh, inst, levelOffset);
+
+        // Check each triangle
+        for (size_t i = 0; i + 2 < mesh.indices.size(); i += 3)
+        {
+            const glm::vec3& v0 = verts[mesh.indices[i]];
+            const glm::vec3& v1 = verts[mesh.indices[i + 1]];
+            const glm::vec3& v2 = verts[mesh.indices[i + 2]];
+
+            if (CircleIntersectsTriangleXZ(playerXZ, radius, v0, v1, v2))
+                return true;
+        }
+    }
+
+    return false;
+}
+
+
 // -----------------------------------------------------------------------------
 // Asset locations
 // -----------------------------------------------------------------------------
@@ -405,8 +562,6 @@ std::vector<InstanceTransform> templePositions = {
 };
 
 
-
-
 int main()
 {
     // -------------------------------------------------------------------------
@@ -471,34 +626,76 @@ int main()
     // SHADERS & MODELS
     //
     // LearnOpenGL handles VAOs/VBOs internally for models.
+    // Collision models are loaded the same way, but will NOT be rendered.
     // -----------------------------------------------------------------------------
     Shader Shaders("shaders/vertexShader.vert", "shaders/fragmentShader.frag");
-	Shader terrainShaders("shaders/terrain.vert", "shaders/terrain.frag");
-    // Cave walls 
+    Shader terrainShaders("shaders/terrain.vert", "shaders/terrain.frag");
+
+    // -------------------------------------------------------------------------
+    // Cave walls (visual)
+    // -------------------------------------------------------------------------
     Model CaveWall1_A("media/cave/CaveWalls1/CaveWalls1_A.obj");
     Model CaveWall1_B("media/cave/CaveWalls1/CaveWalls1_B.obj");
     Model CaveWall1_C("media/cave/CaveWalls1/CaveWalls1_C.obj");
     Model CaveWall1_D("media/cave/CaveWalls1/CaveWalls1_D.obj");
 
-	Model CaveWall2_A("media/cave/CaveWalls2/CaveWalls2_A.obj"); 
-	Model CaveWall2_B("media/cave/CaveWalls2/CaveWalls2_B.obj");
-	Model CaveWall2_C("media/cave/CaveWalls2/CaveWalls2_C.obj"); 
+    Model CaveWall2_A("media/cave/CaveWalls2/CaveWalls2_A.obj");
+    Model CaveWall2_B("media/cave/CaveWalls2/CaveWalls2_B.obj");
+    Model CaveWall2_C("media/cave/CaveWalls2/CaveWalls2_C.obj");
 
-	Model CaveWall3("media/cave/CaveWalls3/CaveWalls3.obj");
+    Model CaveWall3("media/cave/CaveWalls3/CaveWalls3.obj");
 
-	Model CaveWall4_A("media/cave/CaveWalls4/CaveWalls4_A.obj"); 
-	Model CaveWall4_B("media/cave/CaveWalls4/CaveWalls4_B.obj"); 
-	Model CaveWall4_C("media/cave/CaveWalls4/CaveWalls4_C.obj"); 
-	Model CaveWall4_D("media/cave/CaveWalls4/CaveWalls4_D.obj"); 
+    Model CaveWall4_A("media/cave/CaveWalls4/CaveWalls4_A.obj");
+    Model CaveWall4_B("media/cave/CaveWalls4/CaveWalls4_B.obj");
+    Model CaveWall4_C("media/cave/CaveWalls4/CaveWalls4_C.obj");
+    Model CaveWall4_D("media/cave/CaveWalls4/CaveWalls4_D.obj");
 
-	// Cave platforms
+    // -------------------------------------------------------------------------
+// Cave walls (collision meshes – CPU only)
+// -------------------------------------------------------------------------
+    CollisionMesh CaveWall1_A_Collision = LoadCollisionMesh("media/cave/CaveWalls1/CaveWalls1_A_COL.obj");
+    CollisionMesh CaveWall1_B_Collision = LoadCollisionMesh("media/cave/CaveWalls1/CaveWalls1_B_COL.obj");
+    CollisionMesh CaveWall1_C_Collision = LoadCollisionMesh("media/cave/CaveWalls1/CaveWalls1_C_COL.obj");
+    CollisionMesh CaveWall1_D_Collision =  LoadCollisionMesh("media/cave/CaveWalls1/CaveWalls1_D_COL.obj");
+
+    CollisionMesh CaveWall2_A_Collision =  LoadCollisionMesh("media/cave/CaveWalls2/CaveWalls2_A_COL.obj");
+    CollisionMesh CaveWall2_B_Collision = LoadCollisionMesh("media/cave/CaveWalls2/CaveWalls2_B_COL.obj");
+    CollisionMesh CaveWall2_C_Collision = LoadCollisionMesh("media/cave/CaveWalls2/CaveWalls2_C_COL.obj");
+    CollisionMesh CaveWall2_D_Collision = LoadCollisionMesh("media/cave/CaveWalls2/CaveWalls2_D_COL.obj");
+
+    CollisionMesh CaveWall3_Collision = LoadCollisionMesh("media/cave/CaveWalls3/CaveWalls3_COL.obj");
+
+    CollisionMesh CaveWall4_A_Collision = LoadCollisionMesh("media/cave/CaveWalls4/CaveWalls4_A_COL.obj");
+    CollisionMesh CaveWall4_B_Collision = LoadCollisionMesh("media/cave/CaveWalls4/CaveWalls4_B_COL.obj");
+    CollisionMesh CaveWall4_C_Collision = LoadCollisionMesh("media/cave/CaveWalls4/CaveWalls4_C_COL.obj");
+    CollisionMesh CaveWall4_D_Collision = LoadCollisionMesh("media/cave/CaveWalls4/CaveWalls4_D_COL.obj");
+
+    // -------------------------------------------------------------------------
+    // Cave platforms (visual)
+    // -------------------------------------------------------------------------
     Model CavePlatform2_1("media/cave/CavePlatform2/CavePlatform2_1.obj");
-	Model CavePlatform2_2("media/cave/CavePlatform2/CavePlatform2_2.obj"); 
-	Model CavePlatform2_3("media/cave/CavePlatform2/CavePlatform2_3.obj");
-	Model CavePlatform2_4("media/cave/CavePlatform2/CavePlatform2_4.obj"); 
+    Model CavePlatform2_2("media/cave/CavePlatform2/CavePlatform2_2.obj");
+    Model CavePlatform2_3("media/cave/CavePlatform2/CavePlatform2_3.obj");
+    Model CavePlatform2_4("media/cave/CavePlatform2/CavePlatform2_4.obj");
 
-    // Ruins
-	Model TempleOfApollo("media/ruins/temple of apollo.obj");
+    // -------------------------------------------------------------------------
+    // Cave platforms (collision meshes – CPU only)
+    // -------------------------------------------------------------------------
+    CollisionMesh CavePlatform2_1_Collision = LoadCollisionMesh("media/cave/CavePlatform2/CavePlatform2_1_COL.obj");
+    CollisionMesh CavePlatform2_2_Collision = LoadCollisionMesh("media/cave/CavePlatform2/CavePlatform2_2_COL.obj");
+    CollisionMesh CavePlatform2_3_Collision = LoadCollisionMesh("media/cave/CavePlatform2/CavePlatform2_3_COL.obj");
+    CollisionMesh CavePlatform2_4_Collision = LoadCollisionMesh("media/cave/CavePlatform2/CavePlatform2_4_COL.obj");
+
+    // -------------------------------------------------------------------------
+    // Ruins (visual)
+    // -------------------------------------------------------------------------
+    Model TempleOfApollo("media/ruins/temple of apollo.obj");
+
+    // -------------------------------------------------------------------------
+    // Ruins (collision meshes – CPU only)
+    // -------------------------------------------------------------------------
+    CollisionMesh TempleOfApollo_Collision = LoadCollisionMesh("media/ruins/temple of apollo_COL.obj");
+
 
     Shaders.use();
 
@@ -525,6 +722,27 @@ int main()
         700.0f
     );
 
+
+    {
+        const InstanceTransform& testInstance =
+            caveWall2_CPositions[0];
+
+        std::vector<glm::vec3> worldVerts =
+            TransformCollisionVertices(
+                CaveWall2_C_Collision,
+                testInstance,
+                LEVEL_OFFSET
+            );
+
+        std::cout << "[COLLISION DEBUG] First 5 world vertices:\n";
+        for (int i = 0; i < 5 && i < worldVerts.size(); ++i)
+        {
+            std::cout << "  "
+                << worldVerts[i].x << ", "
+                << worldVerts[i].y << ", "
+                << worldVerts[i].z << "\n";
+        }
+    }
     // -------------------------------------------------------------------------
     // RENDER LOOP
     // -----------------------------------------------------------------------------
@@ -570,7 +788,48 @@ int main()
             }
         }
 
+        // ---------------------------------------------------------------------
+        // WALL COLLISION: CaveWall2_C (XZ only, axis-separated)
+        // ---------------------------------------------------------------------
+        if (ENABLE_COLLISIONS)
+        {
+            // Test X movement only
+            glm::vec3 testX = glm::vec3(
+                nextPosition.x,
+                playerPosition.y,
+                playerPosition.z
+            );
 
+            if (CheckWallCollision_CaveWall2_C(
+                testX,
+                CaveWall2_C_Collision,
+                caveWall2_CPositions,
+                PLAYER_RADIUS,
+                LEVEL_OFFSET))
+            {
+                nextPosition.x = playerPosition.x;
+            }
+
+            // Test Z movement only
+            glm::vec3 testZ = glm::vec3(
+                nextPosition.x,
+                playerPosition.y,
+                nextPosition.z
+            );
+
+            if (CheckWallCollision_CaveWall2_C(
+                testZ,
+                CaveWall2_C_Collision,
+                caveWall2_CPositions,
+                PLAYER_RADIUS,
+                LEVEL_OFFSET))
+            {
+                nextPosition.z = playerPosition.z;
+            }
+        }
+
+
+        
         // Apply
         playerPosition = nextPosition;
 
