@@ -130,193 +130,162 @@ struct InstanceTransform
     vec3 scale;        // Usually uniform
 };
 
+
+void DrawInstances(Shader& shader, Model& modelAsset, const std::vector<InstanceTransform>& instances, const glm::vec3& levelOffset) {
+    // -------------------------------------------------------------------------
+    // MODEL TRANSFORM REFERENCE
+    //
+    // Standard per-object transform order:
+    //
+    // model = mat4(1.0f);                      // Reset to WORLD space
+    // model = transform(model, LEVEL_OFFSET);  // Level anchor point
+    // model = translate(model, position);      // Place object in world
+    // model = rotate(model, angle, axis);      // Optional rotation
+    // model = scale(model, instance.scale);    // Uniform/non-uniform scale
+    // SetMatrices(Shaders);                    // Upload to GPU
+    // object.Draw(Shaders);                    // Render object
+    //
+    // IMPORTANT:
+    // - Always reset model per object
+    // - Never "undo" transforms — reset instead
+    // -----------------------------------------------------------------------------
+    for (const auto& inst : instances)
+    {
+        model = mat4(1.0f);
+        model = translate(model, levelOffset);
+        model = translate(model, inst.position);
+        model = rotate(model, radians(inst.rotationY), vec3(0, 1, 0));
+        model = scale(model, inst.scale);
+
+        SetMatrices(shader);
+        modelAsset.Draw(shader);
+    }
+}
 // -----------------------------------------------------------------------------
 // Asset locations
 // -----------------------------------------------------------------------------
 
+// Walls
 std::vector<InstanceTransform> caveWall1_APositions = {
     {
-        BlenderToOpenGL(16.82f, 96.48f, 0.00f),
-        0.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(16.82f, 96.48f, 0.00f), 0.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(42.46f, 86.03f, 0.00f),
-        0.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(42.46f, 86.03f, 0.00f), 0.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(27.51f, 120.49f, 0.00f),
-        0.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(27.51f, 120.49f, 0.00f), 0.00f, vec3(CAVE_SCALE)
     }
 };
 
 std::vector<InstanceTransform> caveWall1_BPositions = {
     {
-        BlenderToOpenGL(-2.81f, 138.38f, 0.00f),
-        199.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(-2.81f, 138.38f, 0.00f), 199.00f, vec3(CAVE_SCALE)
     }
 };
 
 std::vector<InstanceTransform> caveWall1_CPositions = {
     {
-        BlenderToOpenGL(3.95f, 66.21f, 0.00f),
-        60.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(3.95f, 66.21f, 0.00f), 60.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(-57.57f, 149.02f, 0.00f),
-        60.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(-57.57f, 149.02f, 0.00f), 60.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(-38.99f, 113.24f, 0.00f),
-        158.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(-38.99f, 113.24f, 0.00f), 158.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(80.91f, 149.79f, 0.00f),
-        -13.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(80.91f, 149.79f, 0.00f), -13.00f, vec3(CAVE_SCALE)
     }
 };
 
 std::vector<InstanceTransform> caveWall1_DPositions = {
     {
-        BlenderToOpenGL(-11.23f, 125.48f, 0.00f),
-        69.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(-11.23f, 125.48f, 0.00f), 69.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(-19.33f, 104.81f, 0.00f),
-        159.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(-19.33f, 104.81f, 0.00f), 159.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(59.19f, 150.46f, 0.00f),
-        340.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(59.19f, 150.46f, 0.00f), 340.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(-56.86f, 129.93f, 0.00f),
-        159.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(-56.86f, 129.93f, 0.00f), 159.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(80.85f, 77.62f, 0.00f),
-        249.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(80.85f, 77.62f, 0.00f), 249.00f, vec3(CAVE_SCALE)
     }
 };
 
 std::vector<InstanceTransform> caveWall2_APositions = {
     {
-        BlenderToOpenGL(0.00f, 0.00f, 0.00f),
-        0.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(0.00f, 0.00f, 0.00f), 0.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(49.74f, 140.21f, 0.00f),
-        163.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(49.74f, 140.21f, 0.00f), 163.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(18.31f, 65.78f, 0.00f),
-        152.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(18.31f, 65.78f, 0.00f), 152.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(73.03f, 86.96f, 0.00f),
-        248.75f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(73.03f, 86.96f, 0.00f), 248.75f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(-2.98f, 119.03f, 0.00f),
-        248.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(-2.98f, 119.03f, 0.00f), 248.00f, vec3(CAVE_SCALE)
     }
 };
 
 std::vector<InstanceTransform> caveWall2_BPositions = {
     {
-        BlenderToOpenGL(21.24f, -13.29f, 0.00f),
-        294.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(21.24f, -13.29f, 0.00f), 294.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(-22.12f, -13.29f, 0.00f),
-        242.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(-22.12f, -13.29f, 0.00f), 242.00f, vec3(CAVE_SCALE)
     }
 };
 
 std::vector<InstanceTransform> caveWall2_CPositions = {
     {
-        BlenderToOpenGL(50.12f, 66.44f, 0.00f),
-        250.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(50.12f, 66.44f, 0.00f), 250.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(71.21f, 119.85f, 0.00f),
-        340.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(71.21f, 119.85f, 0.00f), 340.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(-0.34f, 89.78f, 0.00f),
-        160.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(-0.34f, 89.78f, 0.00f), 160.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(19.94f, 137.42f, 0.00f),
-        70.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(19.94f, 137.42f, 0.00f), 70.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(99.52f, 129.61f, 0.00f),
-        340.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(99.52f, 129.61f, 0.00f), 340.00f, vec3(CAVE_SCALE)
     }
 };
 
 std::vector<InstanceTransform> caveWall3Positions = {
     {
-        BlenderToOpenGL(-12.00f, 32.00f, 0.00f),
-        75.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(-12.00f, 32.00f, 0.00f), 75.00f,  vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(19.00f, 32.00f, 0.00f),
-        75.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(19.00f, 32.00f, 0.00f), 75.00f, vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(24.44f, 169.37f, 0.00f),
-        354.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(24.44f, 169.37f, 0.00f), 354.00f,  vec3(CAVE_SCALE)
     },
     {
-        BlenderToOpenGL(100.01f, 96.51f, 0.00f),
-        67.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(100.01f, 96.51f, 0.00f), 67.00f, vec3(CAVE_SCALE)
     }
 };
 
-
 std::vector<InstanceTransform> caveWall4_APositions = {
     {
-        BlenderToOpenGL(-35.79f, 162.31f, 0.00f),
-        13.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(-35.79f, 162.31f, 0.00f),  13.00f, vec3(CAVE_SCALE)
     }
 };
 
 std::vector<InstanceTransform> caveWall4_DPositions = {
     {
-        BlenderToOpenGL(53.34f, 107.70f, -5.03f),
-        0.00f,
-        vec3(CAVE_SCALE)
+        BlenderToOpenGL(53.34f, 107.70f, -5.03f), 0.00f,  vec3(CAVE_SCALE)
     }
 };
 
@@ -324,50 +293,34 @@ std::vector<InstanceTransform> caveWall4_DPositions = {
 
 std::vector<InstanceTransform> cavePlatform2_1Positions = {
     {
-        BlenderToOpenGL(4.76f, 28.36f, 14.50f),
-        279.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(4.76f, 28.36f, 14.50f), 279.00f, vec3(PLATFORM_SCALE)
     }
 };
 
 std::vector<InstanceTransform> cavePlatform2_2Positions = {
     {
-        BlenderToOpenGL(15.93f, 154.37f, 15.00f),
-        29.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(15.93f, 154.37f, 15.00f), 29.00f, vec3(PLATFORM_SCALE)
     },
     {
-        BlenderToOpenGL(-38.04f, 139.17f, 14.00f),
-        41.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(-38.04f, 139.17f, 14.00f), 41.00f, vec3(PLATFORM_SCALE)
     },
     {
-        BlenderToOpenGL(62.10f, 133.82f, 14.00f),
-        221.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(62.10f, 133.82f, 14.00f), 221.00f, vec3(PLATFORM_SCALE)
     },
     {
-        BlenderToOpenGL(86.50f, 126.87f, 15.00f),
-        128.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(86.50f, 126.87f, 15.00f), 128.00f,  vec3(PLATFORM_SCALE)
     },
     {
-        BlenderToOpenGL(60.87f, 84.09f, 14.50f),
-        242.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(60.87f, 84.09f, 14.50f), 242.00f, vec3(PLATFORM_SCALE)
     },
     {
-        BlenderToOpenGL(4.83f, 110.31f, 14.50f),
-        221.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(4.83f, 110.31f, 14.50f), 221.00f, vec3(PLATFORM_SCALE)
     }
 };
 
 std::vector<InstanceTransform> cavePlatform2_4Positions = {
     {
-        BlenderToOpenGL(22.04f, 77.04f, 14.00f),
-        40.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(22.04f, 77.04f, 14.00f), 40.00f, vec3(PLATFORM_SCALE)
     }
 };
 
@@ -376,73 +329,48 @@ std::vector<InstanceTransform> cavePlatform2_4Positions = {
 
 std::vector<InstanceTransform> cavePlatform2_2FloorPositions = {
     {
-        BlenderToOpenGL(15.93f, 154.37f, -14.99f),
-        29.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(15.93f, 154.37f, -14.99f), 29.00f, vec3(PLATFORM_SCALE)
     },
     {
-        BlenderToOpenGL(-38.04f, 139.17f, -15.99f),
-        41.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(-38.04f, 139.17f, -15.99f), 41.00f, vec3(PLATFORM_SCALE)
     },
     {
-        BlenderToOpenGL(62.10f, 133.82f, -15.99f),
-        221.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(62.10f, 133.82f, -15.99f), 221.00f, vec3(PLATFORM_SCALE)
     },
     {
-        BlenderToOpenGL(86.50f, 126.87f, -14.99f),
-        128.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(86.50f, 126.87f, -14.99f), 128.00f, vec3(PLATFORM_SCALE)
     },
     {
-        BlenderToOpenGL(60.87f, 84.09f, -15.49f),
-        242.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(60.87f, 84.09f, -15.49f), 242.00f, vec3(PLATFORM_SCALE)
     },
     {
-        BlenderToOpenGL(4.83f, 110.31f, -15.49f),
-        221.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(4.83f, 110.31f, -15.49f), 221.00f, vec3(PLATFORM_SCALE)
     },
     {
-        BlenderToOpenGL(6.18f, 35.50f, -14.99f),
-        117.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(6.18f, 35.50f, -14.99f), 117.00f, vec3(PLATFORM_SCALE)
     }
 };
 
 std::vector<InstanceTransform> cavePlatform2_4FloorPositions = {
     {
-        BlenderToOpenGL(22.04f, 77.04f, -14.64f),
-        40.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(22.04f, 77.04f, -14.64f), 40.00f, vec3(PLATFORM_SCALE)
     },
     {
-        BlenderToOpenGL(32.27f, 57.62f, -14.14f),
-        40.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(32.27f, 57.62f, -14.14f), 40.00f, vec3(PLATFORM_SCALE)
     },
     {
-        BlenderToOpenGL(45.00f, 123.82f, -13.96f),
-        -21.00f,
-        vec3(PLATFORM_SCALE)
+        BlenderToOpenGL(45.00f, 123.82f, -13.96f), -21.00f, vec3(PLATFORM_SCALE)
     }
 };
-
 
 
 // Temple
 std::vector<InstanceTransform> templePositions = {
     {
-        BlenderToOpenGL(-36.20f, 122.53f, -7.33f),
-        116.00f,
-        vec3(RUIN_SCALE)
+        BlenderToOpenGL(-36.20f, 122.53f, -7.33f), 116.00f, vec3(RUIN_SCALE)
     },
     {
-        BlenderToOpenGL(-52.09f, 135.41f, -7.33f),
-        26.00f,
-        vec3(RUIN_SCALE)
+        BlenderToOpenGL(-52.09f, 135.41f, -7.33f), 26.00f, vec3(RUIN_SCALE)
     }
 };
 
@@ -614,197 +542,40 @@ int main()
         //DrawTerrain(terrainCap);
 
 
-        // -------------------------------------------------------------------------
-        // MODEL TRANSFORM REFERENCE
-        //
-        // Standard per-object transform order:
-        //
-        // model = mat4(1.0f);                      // Reset to WORLD space
-		// model = transform(model, LEVEL_OFFSET);  // Level anchor point
-        // model = translate(model, position);      // Place object in world
-        // model = rotate(model, angle, axis);      // Optional rotation
-		// model = scale(model, instance.scale);    // Uniform/non-uniform scale
-		// SetMatrices(Shaders);                    // Upload to GPU
-		// object.Draw(Shaders);                    // Render object
-        //
-        // IMPORTANT:
-        // - Always reset model per object
-        // - Never "undo" transforms — reset instead
-        // -----------------------------------------------------------------------------
+        
 
         // ---------------------------------------------------------------------
         // CAVE WALLS 
         // ---------------------------------------------------------------------
         Shaders.use();
+        // Cave walls
+        DrawInstances(Shaders, CaveWall1_A, caveWall1_APositions, LEVEL_OFFSET);
+        DrawInstances(Shaders, CaveWall1_B, caveWall1_BPositions, LEVEL_OFFSET);
+        DrawInstances(Shaders, CaveWall1_C, caveWall1_CPositions, LEVEL_OFFSET);
+        DrawInstances(Shaders, CaveWall1_D, caveWall1_DPositions, LEVEL_OFFSET);
 
-        for (const auto& instance : caveWall1_APositions) {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET); 
-			model = translate(model, instance.position);
-			model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
-			model = scale(model, instance.scale);
-			SetMatrices(Shaders);
-			CaveWall1_A.Draw(Shaders);
-        }
+        DrawInstances(Shaders, CaveWall2_A, caveWall2_APositions, LEVEL_OFFSET);
+        DrawInstances(Shaders, CaveWall2_B, caveWall2_BPositions, LEVEL_OFFSET);
+        DrawInstances(Shaders, CaveWall2_C, caveWall2_CPositions, LEVEL_OFFSET);
 
-        for (const auto& instance : caveWall1_BPositions) {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET); 
-            model = translate(model, instance.position);
-            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
-            model = scale(model, instance.scale);
-            SetMatrices(Shaders);
-            CaveWall1_B.Draw(Shaders);
-        }
-        
-        for (const auto& instance : caveWall1_CPositions) {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET); 
-            model = translate(model, instance.position);
-            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
-            model = scale(model, instance.scale);
-            SetMatrices(Shaders);
-            CaveWall1_C.Draw(Shaders);
-        }
+        DrawInstances(Shaders, CaveWall3, caveWall3Positions, LEVEL_OFFSET);
 
-        for (const auto& instance : caveWall1_DPositions) {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET);
-            model = translate(model, instance.position);
-            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
-            model = scale(model, instance.scale);
-            SetMatrices(Shaders);
-            CaveWall1_D.Draw(Shaders);
-        }
-
-        for (const auto& instance : caveWall2_APositions) {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET);
-            model = translate(model, instance.position);
-            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
-            model = scale(model, instance.scale);
-            SetMatrices(Shaders);
-            CaveWall2_A.Draw(Shaders);
-        }
-
-        for (const auto& instance : caveWall2_BPositions) {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET);
-            model = translate(model, instance.position);
-            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
-            model = scale(model, instance.scale);
-            SetMatrices(Shaders);
-            CaveWall2_B.Draw(Shaders);
-        }
-
-        for (const auto& instance : caveWall2_CPositions) {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET);
-            model = translate(model, instance.position);
-            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
-            model = scale(model, instance.scale);
-            SetMatrices(Shaders);
-            CaveWall2_C.Draw(Shaders);
-        }
-
-        for (const auto& instance : caveWall3Positions) {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET);
-            model = translate(model, instance.position);
-            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
-            model = scale(model, instance.scale);
-            SetMatrices(Shaders);
-            CaveWall3.Draw(Shaders);
-        }
-
-        for (const auto& instance : caveWall4_APositions) {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET);
-            model = translate(model, instance.position);
-            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
-            model = scale(model, instance.scale);
-            SetMatrices(Shaders);
-            CaveWall4_A.Draw(Shaders);
-        }
-
-        for (const auto& instance : caveWall4_DPositions) {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET);
-            model = translate(model, instance.position);
-            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
-            model = scale(model, instance.scale);
-            SetMatrices(Shaders);
-            CaveWall4_D.Draw(Shaders);
-        }
+        DrawInstances(Shaders, CaveWall4_A, caveWall4_APositions, LEVEL_OFFSET);
+        DrawInstances(Shaders, CaveWall4_D, caveWall4_DPositions, LEVEL_OFFSET);
 
         // Platforms
-        for (const auto& instance : cavePlatform2_1Positions) {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET);
-            model = translate(model, instance.position);
-            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
-            model = scale(model, instance.scale);
-            SetMatrices(Shaders);
-            CavePlatform2_1.Draw(Shaders);
-        }
+        DrawInstances(Shaders, CavePlatform2_1, cavePlatform2_1Positions, LEVEL_OFFSET);
+        DrawInstances(Shaders, CavePlatform2_2, cavePlatform2_2Positions, LEVEL_OFFSET);
+        DrawInstances(Shaders, CavePlatform2_4, cavePlatform2_4Positions, LEVEL_OFFSET);
 
-        for (const auto& instance : cavePlatform2_2Positions) {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET);
-            model = translate(model, instance.position);
-            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
-            model = scale(model, instance.scale);
-            SetMatrices(Shaders);
-            CavePlatform2_2.Draw(Shaders);
-        }
-
-        for (const auto& instance : cavePlatform2_4Positions) {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET);
-            model = translate(model, instance.position);
-            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
-            model = scale(model, instance.scale);
-            SetMatrices(Shaders);
-            CavePlatform2_4.Draw(Shaders);
-        }
-
-        for (const auto& inst : cavePlatform2_2FloorPositions)
-        {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET);
-            model = translate(model, inst.position);
-            model = rotate(model, radians(inst.rotationY), vec3(0, 1, 0));
-            model = scale(model, inst.scale);
-
-            SetMatrices(Shaders);
-            CavePlatform2_2.Draw(Shaders);
-        }
-
-        for (const auto& inst : cavePlatform2_4FloorPositions)
-        {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET);
-            model = translate(model, inst.position);
-            model = rotate(model, radians(inst.rotationY), vec3(0, 1, 0));
-            model = scale(model, inst.scale);
-
-            SetMatrices(Shaders);
-            CavePlatform2_4.Draw(Shaders);
-        }
+        DrawInstances(Shaders, CavePlatform2_2, cavePlatform2_2FloorPositions, LEVEL_OFFSET);
+        DrawInstances(Shaders, CavePlatform2_4, cavePlatform2_4FloorPositions, LEVEL_OFFSET);
 
         // Temple
-        for (const auto& instance : templePositions) {
-            model = mat4(1.0f);
-            model = translate(model, LEVEL_OFFSET);
-            model = translate(model, instance.position);
-            model = rotate(model, radians(instance.rotationY), vec3(0, 1, 0));
-            model = scale(model, instance.scale);
-            SetMatrices(Shaders);
-            TempleOfApollo.Draw(Shaders);
-        }
+        DrawInstances(Shaders, TempleOfApollo, templePositions, LEVEL_OFFSET);
 
 
-
+        
 
         // Swap buffers & poll events
         glfwSwapBuffers(window);
