@@ -49,7 +49,7 @@ GLuint Buffers[NumBuffers];
 //
 // These feed directly into the VIEW matrix via lookAt().
 // -----------------------------------------------------------------------------
-vec3 cameraPosition = vec3(0.0f, 0.0f, 3.0f);
+vec3 cameraPosition = vec3(0.0f, 60.0f, 123.0f);
 vec3 cameraFront = vec3(0.0f, 0.0f, -1.0f);
 vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);
 
@@ -68,6 +68,14 @@ float cameraPitch = 0.0f;
 bool  mouseFirstEntry = true;
 float cameraLastXPos = 800.0f / 2.0f;
 float cameraLastYPos = 600.0f / 2.0f;
+
+// -----------------------------------------------------------------------------
+// GODMODE TOGGLES
+//
+// Enable/disabel these only for testing
+// -----------------------------------------------------------------------------
+bool ENABLE_COLLISIONS = true;
+bool ENABLE_GRAVITY = true;
 
 // -----------------------------------------------------------------------------
 // TRANSFORM MATRICES (Rendering Pipeline)
@@ -105,10 +113,34 @@ constexpr float PLATFORM_SCALE = WORLD_SCALE * 1.5f;
 constexpr float RUIN_SCALE = WORLD_SCALE * 1.0f;
 constexpr float STATUE_SCALE = WORLD_SCALE * 0.2f;
 
+// -----------------------------------------------------------------------------
+// PLAYER STUFF
+// -----------------------------------------------------------------------------
+vec3 playerPosition = cameraPosition;
+vec3 playerVelocity = vec3(0.0f);
+constexpr float PLAYER_HEIGHT = 6.1f * WORLD_SCALE;
+constexpr float PLAYER_RADIUS = 0.35f * WORLD_SCALE;
+
+
+
 // ---------------------------------------------------------------------
 // SCENE ANCHOR
 // ---------------------------------------------------------------------
 const vec3 LEVEL_OFFSET = vec3(0.0f, -30.0f, 100.0f);
+
+
+static float GetTerrainHeightFromInstance(const TerrainInstance& t, float worldX, float worldZ)
+{
+    // Because you DRAW with: translate(model, vec3(-t.center.x, 0, -t.center.y))
+    // the bowl centre ends up at WORLD (0,0). So distance is from (0,0).
+    glm::vec2 pos(worldX, worldZ);
+    float distance = glm::length(pos);
+
+    float t01 = glm::clamp(distance / t.bowlRadius, 0.0f, 1.0f);
+    float smoothT = t01 * t01 * (3.0f - 2.0f * t01);
+
+    return glm::mix(t.bowlDepth, t.bowlHeight, smoothT);
+}
 
 // Converts Blender world coordinates to OpenGL world coordinates
 // Blender: X = left/right, Y = forward, Z = up
@@ -135,15 +167,13 @@ void DrawInstances(Shader& shader, Model& modelAsset, const std::vector<Instance
     // -------------------------------------------------------------------------
     // MODEL TRANSFORM REFERENCE
     //
-    // Standard per-object transform order:
-    //
     // model = mat4(1.0f);                      // Reset to WORLD space
     // model = transform(model, LEVEL_OFFSET);  // Level anchor point
     // model = translate(model, position);      // Place object in world
     // model = rotate(model, angle, axis);      // Optional rotation
     // model = scale(model, instance.scale);    // Uniform/non-uniform scale
     // SetMatrices(Shaders);                    // Upload to GPU
-    // object.Draw(Shaders);                    // Render object
+    // modelAsset.Draw(Shaders);                // Render object
     //
     // IMPORTANT:
     // - Always reset model per object
@@ -166,6 +196,7 @@ void DrawInstances(Shader& shader, Model& modelAsset, const std::vector<Instance
 // -----------------------------------------------------------------------------
 
 // Walls
+
 std::vector<InstanceTransform> caveWall1_APositions = {
     {
         BlenderToOpenGL(16.82f, 96.48f, 0.00f), 0.00f, vec3(CAVE_SCALE)
@@ -324,7 +355,6 @@ std::vector<InstanceTransform> cavePlatform2_4Positions = {
     }
 };
 
-
 // Platforms -- floors
 
 std::vector<InstanceTransform> cavePlatform2_2FloorPositions = {
@@ -363,8 +393,8 @@ std::vector<InstanceTransform> cavePlatform2_4FloorPositions = {
     }
 };
 
-
 // Temple
+
 std::vector<InstanceTransform> templePositions = {
     {
         BlenderToOpenGL(-36.20f, 122.53f, -7.33f), 116.00f, vec3(RUIN_SCALE)
@@ -508,6 +538,46 @@ int main()
         // Input
         ProcessUserInput(window);
 
+        // ---------------------------------------------------------------------
+        // PLAYER PHYSICS (TERRAIN ONLY)
+        // ---------------------------------------------------------------------
+        if (ENABLE_GRAVITY)
+        {
+            const float GRAVITY = -25.0f * WORLD_SCALE;
+            playerVelocity.y += GRAVITY * deltaTime;
+        }
+
+        // Predict next position ONCE
+        glm::vec3 nextPosition = playerPosition + playerVelocity * deltaTime;
+
+        // Terrain collision (Y only)
+        if (ENABLE_COLLISIONS)
+        {
+            // Sample height at the *predicted* horizontal position (nextPosition),
+            // so it matches what you're about to apply this frame.
+            float terrainHeight = GetTerrainHeightFromInstance(
+                terrainBowl,
+                nextPosition.x,
+                nextPosition.z
+            );
+
+            float minY = terrainHeight + PLAYER_HEIGHT;
+
+            if (nextPosition.y < minY)
+            {
+                nextPosition.y = minY;
+                playerVelocity.y = 0.0f;
+            }
+        }
+
+
+        // Apply
+        playerPosition = nextPosition;
+
+        // Camera follows player
+        cameraPosition = playerPosition;
+
+
         // Clear buffers
         glClearColor(0.25f, 0.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -535,15 +605,7 @@ int main()
         SetMatrices(terrainShaders);
         DrawTerrain(terrainBowl);
 
-        // Cap on top
-        //model = mat4(1.0f);
-        //model = translate(model, vec3(-terrainCap.center.x, 0.0f, -terrainCap.center.y));
-        //SetMatrices(terrainShaders);
-        //DrawTerrain(terrainCap);
-
-
-        
-
+       
         // ---------------------------------------------------------------------
         // CAVE WALLS 
         // ---------------------------------------------------------------------
@@ -626,25 +688,43 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     cameraFront = normalize(direction);
 }
 
-void ProcessUserInput(GLFWwindow* WindowIn)
+void ProcessUserInput(GLFWwindow* window)
 {
-    if (glfwGetKey(WindowIn, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(WindowIn, true);
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
 
-    const float movementSpeed = 50.0f * deltaTime;
+    const float moveSpeed = 60.0f * WORLD_SCALE;
 
-    if (glfwGetKey(WindowIn, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPosition += movementSpeed * cameraFront;
+    // RESET horizontal velocity every frame
+    playerVelocity.x = 0.0f;
+    playerVelocity.z = 0.0f;
 
-    if (glfwGetKey(WindowIn, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPosition -= movementSpeed * cameraFront;
+    vec3 forward;
 
-    if (glfwGetKey(WindowIn, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPosition -= normalize(cross(cameraFront, cameraUp)) * movementSpeed;
+    if (ENABLE_GRAVITY)
+    {
+        forward = normalize(vec3(cameraFront.x, 0.0f, cameraFront.z));
+    }
+    else
+    {
+        forward = normalize(cameraFront);
+    }
 
-    if (glfwGetKey(WindowIn, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPosition += normalize(cross(cameraFront, cameraUp)) * movementSpeed;
+    vec3 right = normalize(cross(forward, cameraUp));
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        playerVelocity += forward * moveSpeed;
+
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        playerVelocity -= forward * moveSpeed;
+
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        playerVelocity -= right * moveSpeed;
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        playerVelocity += right * moveSpeed;
 }
+
 
 // -----------------------------------------------------------------------------
 // MVP UPLOAD
