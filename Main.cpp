@@ -119,8 +119,49 @@ constexpr float STATUE_SCALE = WORLD_SCALE * 0.2f;
 struct CollisionMesh
 {
     std::vector<glm::vec3> vertices;
-    std::vector<unsigned int> indices; // triangles (3 per face)
+    std::vector<unsigned int> indices;
 };
+
+// -----------------------------------------------------------------------------
+// TRANSFORM STRUCT
+// -----------------------------------------------------------------------------
+struct InstanceTransform
+{
+    vec3 position;
+    float rotationY;
+    vec3 scale;
+};
+
+// -----------------------------------------------------------------------------
+// Forward declarations (collision helpers)
+// -----------------------------------------------------------------------------
+glm::mat4 BuildModelMatrix(
+    const InstanceTransform& inst,
+    const glm::vec3& levelOffset);
+
+std::vector<glm::vec3> TransformCollisionVertices(
+    const CollisionMesh& mesh,
+    const InstanceTransform& inst,
+    const glm::vec3& levelOffset);
+
+float DistancePointToSegmentXZ(
+    const glm::vec2& p,
+    const glm::vec2& a,
+    const glm::vec2& b);
+
+bool CircleIntersectsTriangleXZ(
+    const glm::vec2& circleCenter,
+    float radius,
+    const glm::vec3& v0,
+    const glm::vec3& v1,
+    const glm::vec3& v2);
+
+
+
+// -----------------------------------------------------------------------------
+// COLLISION MESH STRUCTURE
+// -----------------------------------------------------------------------------
+
 
 CollisionMesh LoadCollisionMesh(const std::string& path)
 {
@@ -171,6 +212,51 @@ CollisionMesh LoadCollisionMesh(const std::string& path)
     return result;
 }
 
+struct CollisionGroup
+{
+    const CollisionMesh* mesh;
+    const std::vector<InstanceTransform>* instances;
+
+    CollisionGroup(
+        const CollisionMesh* m,
+        const std::vector<InstanceTransform>* i)
+        : mesh(m), instances(i) {}
+};
+
+
+bool CheckWallCollision(
+    const glm::vec3& playerPos,
+    const std::vector<CollisionGroup>& groups,
+    float radius,
+    const glm::vec3& levelOffset)
+{
+    glm::vec2 playerXZ(playerPos.x, playerPos.z);
+
+    for (const CollisionGroup& group : groups)
+    {
+        for (const auto& inst : *group.instances)
+        {
+            std::vector<glm::vec3> verts =
+                TransformCollisionVertices(*group.mesh, inst, levelOffset);
+
+            for (size_t i = 0; i + 2 < group.mesh->indices.size(); i += 3)
+            {
+                const glm::vec3& v0 = verts[group.mesh->indices[i]];
+                const glm::vec3& v1 = verts[group.mesh->indices[i + 1]];
+                const glm::vec3& v2 = verts[group.mesh->indices[i + 2]];
+
+                if (CircleIntersectsTriangleXZ(
+                    playerXZ, radius, v0, v1, v2))
+                {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
 
 // -----------------------------------------------------------------------------
 // PLAYER STUFF
@@ -213,13 +299,7 @@ vec3 BlenderToOpenGL(float bx, float by, float bz)
     );
 }
 
-// 
-struct InstanceTransform
-{
-    vec3 position;     // OpenGL world position
-    float rotationY;   // Y-axis rotation in degrees (Blender Z)
-    vec3 scale;        // Usually uniform
-};
+
 
 
 void DrawInstances(Shader& shader, Model& modelAsset, const std::vector<InstanceTransform>& instances, const glm::vec3& levelOffset) {
@@ -697,6 +777,26 @@ int main()
     CollisionMesh TempleOfApollo_Collision = LoadCollisionMesh("media/ruins/temple of apollo_COL.obj");
 
 
+    // -------------------------------------------------------------------------
+    // Wall collision groups (explicit opt-in)
+    // -------------------------------------------------------------------------
+    std::vector<CollisionGroup> wallCollisionGroups = {
+        { &CaveWall1_A_Collision, &caveWall1_APositions },
+        { &CaveWall1_B_Collision, &caveWall1_BPositions },
+        { &CaveWall1_C_Collision, &caveWall1_CPositions },
+        { &CaveWall1_D_Collision, &caveWall1_DPositions },
+
+        //{ &CaveWall2_A_Collision, &caveWall2_APositions },
+        { &CaveWall2_B_Collision, &caveWall2_BPositions },
+        { &CaveWall2_C_Collision, &caveWall2_CPositions },
+
+        { &CaveWall3_Collision,   &caveWall3Positions },
+
+        { &CaveWall4_A_Collision, &caveWall4_APositions },
+        { &CaveWall4_D_Collision, &caveWall4_DPositions }
+    };
+
+
     Shaders.use();
 
     // -------------------------------------------------------------------------
@@ -789,44 +889,35 @@ int main()
         }
 
         // ---------------------------------------------------------------------
-        // WALL COLLISION: CaveWall2_C (XZ only, axis-separated)
+        // WALL COLLISION (all registered wall groups)
         // ---------------------------------------------------------------------
         if (ENABLE_COLLISIONS)
         {
-            // Test X movement only
-            glm::vec3 testX = glm::vec3(
-                nextPosition.x,
-                playerPosition.y,
-                playerPosition.z
-            );
+            // X axis
+            glm::vec3 testX(nextPosition.x, playerPosition.y, playerPosition.z);
 
-            if (CheckWallCollision_CaveWall2_C(
+            if (CheckWallCollision(
                 testX,
-                CaveWall2_C_Collision,
-                caveWall2_CPositions,
+                wallCollisionGroups,
                 PLAYER_RADIUS,
                 LEVEL_OFFSET))
             {
                 nextPosition.x = playerPosition.x;
             }
 
-            // Test Z movement only
-            glm::vec3 testZ = glm::vec3(
-                nextPosition.x,
-                playerPosition.y,
-                nextPosition.z
-            );
+            // Z axis
+            glm::vec3 testZ(nextPosition.x, playerPosition.y, nextPosition.z);
 
-            if (CheckWallCollision_CaveWall2_C(
+            if (CheckWallCollision(
                 testZ,
-                CaveWall2_C_Collision,
-                caveWall2_CPositions,
+                wallCollisionGroups,
                 PLAYER_RADIUS,
                 LEVEL_OFFSET))
             {
                 nextPosition.z = playerPosition.z;
             }
         }
+
 
 
         
