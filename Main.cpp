@@ -86,7 +86,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // -----------------------------------------------------------------------------
-// WORLD SCALE SYSTEM
+// WORLD SCALE SYSTEM + VALUES
 // -----------------------------------------------------------------------------
 
 constexpr float WORLD_SCALE = 1.0f;
@@ -95,6 +95,9 @@ constexpr float CAVE_SCALE = WORLD_SCALE * 0.5f;
 constexpr float PLATFORM_SCALE = WORLD_SCALE * 1.5f;
 constexpr float RUIN_SCALE = WORLD_SCALE * 1.0f;
 constexpr float STATUE_SCALE = WORLD_SCALE * 0.2f;
+
+// Player unable to fall below this level -- acts as floor within cave
+constexpr float PLAYER_MIN_HEIGHT = -36.0f * WORLD_SCALE;
 
 // -----------------------------------------------------------------------------
 // COLLISION SYSTEM (CPU SIDE)
@@ -735,7 +738,7 @@ int main()
         }
 
         // Predict next position ONCE
-        glm::vec3 nextPosition = playerPosition + playerVelocity * deltaTime;
+        vec3 nextPosition = playerPosition + playerVelocity * deltaTime;
 
         // Terrain collision (Y only)
         if (ENABLE_COLLISIONS)
@@ -753,13 +756,25 @@ int main()
             }
         }
 
+        // Cave floor height
+        {
+            float absoluteMinY = PLAYER_MIN_HEIGHT + PLAYER_HEIGHT;
+
+            if (nextPosition.y < absoluteMinY)
+            {
+                nextPosition.y = absoluteMinY;
+                playerVelocity.y = 0.0f;
+            }
+        }
+
+
         // ---------------------------------------------------------------------
         // WALL COLLISION (all registered wall groups)
         // ---------------------------------------------------------------------
         if (ENABLE_COLLISIONS)
         {
             // X axis
-            glm::vec3 testX(nextPosition.x, playerPosition.y, playerPosition.z);
+            vec3 testX(nextPosition.x, playerPosition.y, playerPosition.z);
 
             if (CheckWallCollision(testX, wallCollisionGroups, PLAYER_RADIUS, LEVEL_OFFSET))
             {
@@ -767,7 +782,7 @@ int main()
             }
 
             // Z axis
-            glm::vec3 testZ(nextPosition.x, playerPosition.y, nextPosition.z);
+            vec3 testZ(nextPosition.x, playerPosition.y, nextPosition.z);
 
             if (CheckWallCollision(testZ, wallCollisionGroups, PLAYER_RADIUS, LEVEL_OFFSET))
             {
