@@ -43,6 +43,14 @@ enum Buffer_IDs { ArrayBuffer, NumBuffers = 4 };
 GLuint Buffers[NumBuffers];
 
 // -----------------------------------------------------------------------------
+// GAME STATE
+// -----------------------------------------------------------------------------
+
+int collectedArtifacts = 0;
+const int totalArtifacts = 3;
+bool gameWon = false;
+
+// -----------------------------------------------------------------------------
 // CAMERA STATE
 // -----------------------------------------------------------------------------
 
@@ -270,7 +278,7 @@ constexpr float PLAYER_HEIGHT = 6.1f * WORLD_SCALE;
 constexpr float PLAYER_RADIUS = 0.35f * WORLD_SCALE;
 
 // -----------------------------------------------------------------------------
-// SCENE ANCHOR + WORLD QUERIES
+// SCENE ANCHOR + HELPERS
 // 
 // BlenderToOPenGL: Converts Blender world coordinates to OpenGL world coordinates
 // Blender: X = left/right, Y = forward, Z = up
@@ -294,6 +302,17 @@ static float GetTerrainHeightFromInstance(const TerrainInstance& t, float worldX
     float smoothT = t01 * t01 * (3.0f - 2.0f * t01);
 
     return glm::mix(t.bowlDepth, t.bowlHeight, smoothT);
+}
+
+bool CheckWinCondition(const vec3& playerPos, const InstanceTransform& trigger, float radius)
+{
+	vec3 triggerWorldPos = trigger.position + LEVEL_OFFSET;
+    
+    vec2 playerXZ(playerPos.x, playerPos.z);
+    vec2 triggerXZ(triggerWorldPos.x, triggerWorldPos.z);
+
+    float distance = length(playerXZ - triggerXZ);
+    return distance <= radius;
 }
 
 // -----------------------------------------------------------------------------
@@ -549,6 +568,7 @@ int main()
     // Bind OpenGL context
     glfwMakeContextCurrent(window);
 
+
     // -------------------------------------------------------------------------
     // GLAD INITIALISATION
     // Must be done AFTER context creation
@@ -679,6 +699,11 @@ int main()
         { &CaveWall4_D_Collision, &caveWall4_DPositions }
     };
 
+    // -------------------------------------------------------------------------
+    // WIN CONDITION SETUP (temporary test)
+    // -------------------------------------------------------------------------
+    const InstanceTransform& artefactTransform = caveWall4_DPositions[0];
+    const float TRIGGER_RADIUS = 10.0f;
 
     Shaders.use();
 
@@ -727,6 +752,19 @@ int main()
 
         // Input
         ProcessUserInput(window);
+
+        // ---------------------------------------------------------------------
+        // WIN CONDITION CHECK
+        // ---------------------------------------------------------------------
+        if (CheckWinCondition(playerPosition, artefactTransform, TRIGGER_RADIUS))
+        {
+            std::cout << "\n=================================\n";
+            std::cout << " YOU FOUND THE ARTEFACT!\n";
+            std::cout << "        YOU WIN\n";
+            std::cout << "=================================\n";
+
+            glfwSetWindowShouldClose(window, true);
+        }
 
         // ---------------------------------------------------------------------
         // PLAYER PHYSICS (TERRAIN ONLY)
