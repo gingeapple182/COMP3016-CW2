@@ -1,23 +1,27 @@
-//STD
+// -----------------------------------------------------------------------------
+// INCLUDES
+// -----------------------------------------------------------------------------
+
+// STD
 #include <iostream>
 
-//GLAD
+// GLAD
 #include <glad/glad.h>
 
-//GLM
+// GLM
 #include "glm/ext/vector_float3.hpp"
-#include <glm/gtc/type_ptr.hpp> // Access to value_ptr for uniforms
+#include <glm/gtc/type_ptr.hpp>
 
-//ASSIMP
+// ASSIMP
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-//LEARNOPENGL
+// LEARNOPENGL
 #include <learnopengl/shader_m.h>
 #include <learnopengl/model.h>
 
-//GENERAL
+// PROJECT
 #include "main.h"
 #include "terrain.h"
 
@@ -25,15 +29,13 @@ using namespace std;
 using namespace glm;
 
 // -----------------------------------------------------------------------------
-// WINDOW STATE
+// WINDOW & OPENGL STATE
 // -----------------------------------------------------------------------------
+
 int windowWidth;
 int windowHeight;
 
-// -----------------------------------------------------------------------------
-// VAO / BUFFER ENUMS
-// (Not actively used for models, but kept for consistency with earlier labs)
-// -----------------------------------------------------------------------------
+// Legacy enums retained for consistency with earlier labs
 enum VAO_IDs { Triangles, Indices, Colours, Textures, NumVAOs = 2 };
 GLuint VAOs[NumVAOs];
 
@@ -41,26 +43,15 @@ enum Buffer_IDs { ArrayBuffer, NumBuffers = 4 };
 GLuint Buffers[NumBuffers];
 
 // -----------------------------------------------------------------------------
-// CAMERA SPACE REFERENCE
-//
-// cameraPosition : where the camera exists in WORLD space
-// cameraFront    : direction the camera is facing (normalised)
-// cameraUp       : what "up" means for the camera (usually +Y)
-//
-// These feed directly into the VIEW matrix via lookAt().
+// CAMERA STATE
 // -----------------------------------------------------------------------------
+
 vec3 cameraPosition = vec3(0.0f, 60.0f, 123.0f);
 vec3 cameraFront = vec3(0.0f, 0.0f, -1.0f);
 vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);
 
-// -----------------------------------------------------------------------------
-// CAMERA ROTATION (Euler angles)
-//
-// Yaw   : rotation around the WORLD Y axis (left/right)
-// Pitch : rotation around camera-local X axis (up/down)
-//
-// Pitch is clamped to prevent gimbal lock.
-// -----------------------------------------------------------------------------
+// Yaw : left/right rotation - world
+// Pitch : up/down rotation - camera
 float cameraYaw = -90.0f;
 float cameraPitch = 0.0f;
 
@@ -74,57 +65,53 @@ float cameraLastYPos = 600.0f / 2.0f;
 //
 // Enable/disabel these only for testing
 // -----------------------------------------------------------------------------
+
 bool ENABLE_COLLISIONS = true;
 bool ENABLE_GRAVITY = true;
 
 // -----------------------------------------------------------------------------
-// TRANSFORM MATRICES (Rendering Pipeline)
-//
-// model      : object ? world space
-// view       : world ? camera space
-// projection : camera ? clip space
-//
-// mvp = projection * view * model
+// RENDER PIPELINE STATE
 // -----------------------------------------------------------------------------
+
 mat4 mvp;
 mat4 model;
 mat4 view;
 mat4 projection;
 
 // -----------------------------------------------------------------------------
-// TIME (used for movement and frame-independent motion)
+// TIME
 // -----------------------------------------------------------------------------
+
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // -----------------------------------------------------------------------------
-// WORLD & ASSET SCALE SYSTEM
-//
-// WORLD_SCALE defines what "1 unit" means in the scene.
-// All asset scales should be relative to this.
-//
-// If WORLD_SCALE changes later, everything scales consistently.
+// WORLD SCALE SYSTEM
 // -----------------------------------------------------------------------------
+
 constexpr float WORLD_SCALE = 1.0f;
 
-// Asset-specific scale values (relative to WORLD_SCALE)
 constexpr float CAVE_SCALE = WORLD_SCALE * 0.5f;
 constexpr float PLATFORM_SCALE = WORLD_SCALE * 1.5f;
 constexpr float RUIN_SCALE = WORLD_SCALE * 1.0f;
 constexpr float STATUE_SCALE = WORLD_SCALE * 0.2f;
 
 // -----------------------------------------------------------------------------
-// COLLISION MESH STRUCTURE
+// COLLISION SYSTEM (CPU SIDE)
+//
+// Uses low-poly collision meshes authored in Blender (_COL).
+// Collision meshes are never rendered and exist only on the CPU.
+// Current implementation handles WALL collision only (XZ plane).
+// Floor / platform collision is intentionally handled separately.
 // -----------------------------------------------------------------------------
+
+// Data structures
 struct CollisionMesh
 {
     std::vector<glm::vec3> vertices;
     std::vector<unsigned int> indices;
 };
 
-// -----------------------------------------------------------------------------
-// TRANSFORM STRUCT
-// -----------------------------------------------------------------------------
 struct InstanceTransform
 {
     vec3 position;
@@ -132,48 +119,21 @@ struct InstanceTransform
     vec3 scale;
 };
 
-// -----------------------------------------------------------------------------
-// Forward declarations (collision helpers)
-// -----------------------------------------------------------------------------
-glm::mat4 BuildModelMatrix(
-    const InstanceTransform& inst,
-    const glm::vec3& levelOffset);
+struct CollisionGroup
+{
+    const CollisionMesh* mesh;
+    const std::vector<InstanceTransform>* instances;
 
-std::vector<glm::vec3> TransformCollisionVertices(
-    const CollisionMesh& mesh,
-    const InstanceTransform& inst,
-    const glm::vec3& levelOffset);
+    CollisionGroup(const CollisionMesh* m, const std::vector<InstanceTransform>* i) : mesh(m), instances(i) {}
+};
 
-float DistancePointToSegmentXZ(
-    const glm::vec2& p,
-    const glm::vec2& a,
-    const glm::vec2& b);
-
-bool CircleIntersectsTriangleXZ(
-    const glm::vec2& circleCenter,
-    float radius,
-    const glm::vec3& v0,
-    const glm::vec3& v1,
-    const glm::vec3& v2);
-
-
-
-// -----------------------------------------------------------------------------
-// COLLISION MESH STRUCTURE
-// -----------------------------------------------------------------------------
-
-
+// Collision loading
 CollisionMesh LoadCollisionMesh(const std::string& path)
 {
     CollisionMesh result;
 
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(
-        path,
-        aiProcess_Triangulate |
-        aiProcess_JoinIdenticalVertices |
-        aiProcess_GenNormals
-    );
+    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_GenNormals);
 
     if (!scene || !scene->HasMeshes())
     {
@@ -212,23 +172,63 @@ CollisionMesh LoadCollisionMesh(const std::string& path)
     return result;
 }
 
-struct CollisionGroup
+// Transform helpers
+glm::mat4 BuildModelMatrix(const InstanceTransform& inst, const glm::vec3& levelOffset)
 {
-    const CollisionMesh* mesh;
-    const std::vector<InstanceTransform>* instances;
+    glm::mat4 m(1.0f);
 
-    CollisionGroup(
-        const CollisionMesh* m,
-        const std::vector<InstanceTransform>* i)
-        : mesh(m), instances(i) {}
-};
+    m = glm::translate(m, levelOffset);
+    m = glm::translate(m, inst.position);
+    m = glm::rotate(m, glm::radians(inst.rotationY), glm::vec3(0, 1, 0));
+    m = glm::scale(m, inst.scale);
 
+    return m;
+}
 
-bool CheckWallCollision(
-    const glm::vec3& playerPos,
-    const std::vector<CollisionGroup>& groups,
-    float radius,
-    const glm::vec3& levelOffset)
+std::vector<glm::vec3> TransformCollisionVertices(const CollisionMesh& mesh, const InstanceTransform& inst, const glm::vec3& levelOffset)
+{
+    std::vector<glm::vec3> worldVerts;
+    worldVerts.reserve(mesh.vertices.size());
+
+    glm::mat4 modelMatrix = BuildModelMatrix(inst, levelOffset);
+
+    for (const glm::vec3& v : mesh.vertices)
+    {
+        glm::vec4 worldPos = modelMatrix * glm::vec4(v, 1.0f);
+        worldVerts.emplace_back(worldPos.x, worldPos.y, worldPos.z);
+    }
+
+    return worldVerts;
+}
+
+// Geometry helpers
+float DistancePointToSegmentXZ(const glm::vec2& p, const glm::vec2& a, const glm::vec2& b)
+{
+    glm::vec2 ab = b - a;
+    float t = glm::dot(p - a, ab) / glm::dot(ab, ab);
+    t = glm::clamp(t, 0.0f, 1.0f);
+    glm::vec2 closest = a + t * ab;
+    return glm::length(p - closest);
+}
+
+bool CircleIntersectsTriangleXZ(const glm::vec2& circleCenter, float radius, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2)
+{
+    glm::vec2 p(circleCenter);
+
+    glm::vec2 a(v0.x, v0.z);
+    glm::vec2 b(v1.x, v1.z);
+    glm::vec2 c(v2.x, v2.z);
+
+    // Check distance to triangle edges
+    if (DistancePointToSegmentXZ(p, a, b) <= radius) return true;
+    if (DistancePointToSegmentXZ(p, b, c) <= radius) return true;
+    if (DistancePointToSegmentXZ(p, c, a) <= radius) return true;
+
+    return false;
+}
+
+// Collision check
+bool CheckWallCollision(const glm::vec3& playerPos, const std::vector<CollisionGroup>& groups, float radius, const glm::vec3& levelOffset)
 {
     glm::vec2 playerXZ(playerPos.x, playerPos.z);
 
@@ -245,8 +245,7 @@ bool CheckWallCollision(
                 const glm::vec3& v1 = verts[group.mesh->indices[i + 1]];
                 const glm::vec3& v2 = verts[group.mesh->indices[i + 2]];
 
-                if (CircleIntersectsTriangleXZ(
-                    playerXZ, radius, v0, v1, v2))
+                if (CircleIntersectsTriangleXZ(playerXZ, radius, v0, v1, v2))
                 {
                     return true;
                 }
@@ -257,27 +256,34 @@ bool CheckWallCollision(
     return false;
 }
 
+// -----------------------------------------------------------------------------
+// PLAYER STATE
+// -----------------------------------------------------------------------------
 
-// -----------------------------------------------------------------------------
-// PLAYER STUFF
-// -----------------------------------------------------------------------------
 vec3 playerPosition = cameraPosition;
 vec3 playerVelocity = vec3(0.0f);
+
 constexpr float PLAYER_HEIGHT = 6.1f * WORLD_SCALE;
 constexpr float PLAYER_RADIUS = 0.35f * WORLD_SCALE;
 
+// -----------------------------------------------------------------------------
+// SCENE ANCHOR + WORLD QUERIES
+// 
+// BlenderToOPenGL: Converts Blender world coordinates to OpenGL world coordinates
+// Blender: X = left/right, Y = forward, Z = up
+// OpenGL:  X = left/right, Y = up,      Z = -forward
+//
+// -----------------------------------------------------------------------------
 
-
-// ---------------------------------------------------------------------
-// SCENE ANCHOR
-// ---------------------------------------------------------------------
 const vec3 LEVEL_OFFSET = vec3(0.0f, -30.0f, 100.0f);
 
+vec3 BlenderToOpenGL(float bx, float by, float bz)
+{
+    return vec3(bx, bz, -by);
+}
 
 static float GetTerrainHeightFromInstance(const TerrainInstance& t, float worldX, float worldZ)
 {
-    // Because you DRAW with: translate(model, vec3(-t.center.x, 0, -t.center.y))
-    // the bowl centre ends up at WORLD (0,0). So distance is from (0,0).
     glm::vec2 pos(worldX, worldZ);
     float distance = glm::length(pos);
 
@@ -287,20 +293,9 @@ static float GetTerrainHeightFromInstance(const TerrainInstance& t, float worldX
     return glm::mix(t.bowlDepth, t.bowlHeight, smoothT);
 }
 
-// Converts Blender world coordinates to OpenGL world coordinates
-// Blender: X = left/right, Y = forward, Z = up
-// OpenGL:  X = left/right, Y = up,      Z = -forward
-vec3 BlenderToOpenGL(float bx, float by, float bz)
-{
-    return vec3(
-        bx,     // X stays X
-        bz,     // Blender Z (up) -> OpenGL Y (up)
-        -by      // Blender Y (forward) -> OpenGL -Z (forward)
-    );
-}
-
-
-
+// -----------------------------------------------------------------------------
+// RENDERING HELPERS
+// -----------------------------------------------------------------------------
 
 void DrawInstances(Shader& shader, Model& modelAsset, const std::vector<InstanceTransform>& instances, const glm::vec3& levelOffset) {
     // -------------------------------------------------------------------------
@@ -313,11 +308,7 @@ void DrawInstances(Shader& shader, Model& modelAsset, const std::vector<Instance
     // model = scale(model, instance.scale);    // Uniform/non-uniform scale
     // SetMatrices(Shaders);                    // Upload to GPU
     // modelAsset.Draw(Shaders);                // Render object
-    //
-    // IMPORTANT:
-    // - Always reset model per object
-    // - Never "undo" transforms — reset instead
-    // -----------------------------------------------------------------------------
+    // --------------------------------------------------------------------------
     for (const auto& inst : instances)
     {
         model = mat4(1.0f);
@@ -331,109 +322,11 @@ void DrawInstances(Shader& shader, Model& modelAsset, const std::vector<Instance
     }
 }
 
-glm::mat4 BuildModelMatrix(
-    const InstanceTransform& inst,
-    const glm::vec3& levelOffset)
-{
-    glm::mat4 m(1.0f);
-
-    m = glm::translate(m, levelOffset);
-    m = glm::translate(m, inst.position);
-    m = glm::rotate(m, glm::radians(inst.rotationY), glm::vec3(0, 1, 0));
-    m = glm::scale(m, inst.scale);
-
-    return m;
-}
-
-std::vector<glm::vec3> TransformCollisionVertices(
-    const CollisionMesh& mesh,
-    const InstanceTransform& inst,
-    const glm::vec3& levelOffset)
-{
-    std::vector<glm::vec3> worldVerts;
-    worldVerts.reserve(mesh.vertices.size());
-
-    glm::mat4 modelMatrix = BuildModelMatrix(inst, levelOffset);
-
-    for (const glm::vec3& v : mesh.vertices)
-    {
-        glm::vec4 worldPos = modelMatrix * glm::vec4(v, 1.0f);
-        worldVerts.emplace_back(worldPos.x, worldPos.y, worldPos.z);
-    }
-
-    return worldVerts;
-}
-
-float DistancePointToSegmentXZ(
-    const glm::vec2& p,
-    const glm::vec2& a,
-    const glm::vec2& b)
-{
-    glm::vec2 ab = b - a;
-    float t = glm::dot(p - a, ab) / glm::dot(ab, ab);
-    t = glm::clamp(t, 0.0f, 1.0f);
-    glm::vec2 closest = a + t * ab;
-    return glm::length(p - closest);
-}
-
-bool CircleIntersectsTriangleXZ(
-    const glm::vec2& circleCenter,
-    float radius,
-    const glm::vec3& v0,
-    const glm::vec3& v1,
-    const glm::vec3& v2)
-{
-    glm::vec2 p(circleCenter);
-
-    glm::vec2 a(v0.x, v0.z);
-    glm::vec2 b(v1.x, v1.z);
-    glm::vec2 c(v2.x, v2.z);
-
-    // Check distance to triangle edges
-    if (DistancePointToSegmentXZ(p, a, b) <= radius) return true;
-    if (DistancePointToSegmentXZ(p, b, c) <= radius) return true;
-    if (DistancePointToSegmentXZ(p, c, a) <= radius) return true;
-
-    return false;
-}
-
-bool CheckWallCollision_CaveWall2_C(
-    const glm::vec3& playerPos,
-    const CollisionMesh& mesh,
-    const std::vector<InstanceTransform>& instances,
-    float radius,
-    const glm::vec3& levelOffset)
-{
-    glm::vec2 playerXZ(playerPos.x, playerPos.z);
-
-    for (const auto& inst : instances)
-    {
-        // Transform mesh into world space for this instance
-        std::vector<glm::vec3> verts =
-            TransformCollisionVertices(mesh, inst, levelOffset);
-
-        // Check each triangle
-        for (size_t i = 0; i + 2 < mesh.indices.size(); i += 3)
-        {
-            const glm::vec3& v0 = verts[mesh.indices[i]];
-            const glm::vec3& v1 = verts[mesh.indices[i + 1]];
-            const glm::vec3& v2 = verts[mesh.indices[i + 2]];
-
-            if (CircleIntersectsTriangleXZ(playerXZ, radius, v0, v1, v2))
-                return true;
-        }
-    }
-
-    return false;
-}
-
-
 // -----------------------------------------------------------------------------
 // Asset locations
 // -----------------------------------------------------------------------------
 
 // Walls
-
 std::vector<InstanceTransform> caveWall1_APositions = {
     {
         BlenderToOpenGL(16.82f, 96.48f, 0.00f), 0.00f, vec3(CAVE_SCALE)
@@ -445,13 +338,11 @@ std::vector<InstanceTransform> caveWall1_APositions = {
         BlenderToOpenGL(27.51f, 120.49f, 0.00f), 0.00f, vec3(CAVE_SCALE)
     }
 };
-
 std::vector<InstanceTransform> caveWall1_BPositions = {
     {
         BlenderToOpenGL(-2.81f, 138.38f, 0.00f), 199.00f, vec3(CAVE_SCALE)
     }
 };
-
 std::vector<InstanceTransform> caveWall1_CPositions = {
     {
         BlenderToOpenGL(3.95f, 66.21f, 0.00f), 60.00f, vec3(CAVE_SCALE)
@@ -466,7 +357,6 @@ std::vector<InstanceTransform> caveWall1_CPositions = {
         BlenderToOpenGL(80.91f, 149.79f, 0.00f), -13.00f, vec3(CAVE_SCALE)
     }
 };
-
 std::vector<InstanceTransform> caveWall1_DPositions = {
     {
         BlenderToOpenGL(-11.23f, 125.48f, 0.00f), 69.00f, vec3(CAVE_SCALE)
@@ -502,7 +392,6 @@ std::vector<InstanceTransform> caveWall2_APositions = {
         BlenderToOpenGL(-2.98f, 119.03f, 0.00f), 248.00f, vec3(CAVE_SCALE)
     }
 };
-
 std::vector<InstanceTransform> caveWall2_BPositions = {
     {
         BlenderToOpenGL(21.24f, -13.29f, 0.00f), 294.00f, vec3(CAVE_SCALE)
@@ -511,7 +400,6 @@ std::vector<InstanceTransform> caveWall2_BPositions = {
         BlenderToOpenGL(-22.12f, -13.29f, 0.00f), 242.00f, vec3(CAVE_SCALE)
     }
 };
-
 std::vector<InstanceTransform> caveWall2_CPositions = {
     {
         BlenderToOpenGL(50.12f, 66.44f, 0.00f), 250.00f, vec3(CAVE_SCALE)
@@ -550,7 +438,6 @@ std::vector<InstanceTransform> caveWall4_APositions = {
         BlenderToOpenGL(-35.79f, 162.31f, 0.00f),  13.00f, vec3(CAVE_SCALE)
     }
 };
-
 std::vector<InstanceTransform> caveWall4_DPositions = {
     {
         BlenderToOpenGL(53.34f, 107.70f, -5.03f), 0.00f,  vec3(CAVE_SCALE)
@@ -558,13 +445,11 @@ std::vector<InstanceTransform> caveWall4_DPositions = {
 };
 
 // Platforms -- ceiling
-
 std::vector<InstanceTransform> cavePlatform2_1Positions = {
     {
         BlenderToOpenGL(4.76f, 28.36f, 14.50f), 279.00f, vec3(PLATFORM_SCALE)
     }
 };
-
 std::vector<InstanceTransform> cavePlatform2_2Positions = {
     {
         BlenderToOpenGL(15.93f, 154.37f, 15.00f), 29.00f, vec3(PLATFORM_SCALE)
@@ -585,7 +470,6 @@ std::vector<InstanceTransform> cavePlatform2_2Positions = {
         BlenderToOpenGL(4.83f, 110.31f, 14.50f), 221.00f, vec3(PLATFORM_SCALE)
     }
 };
-
 std::vector<InstanceTransform> cavePlatform2_4Positions = {
     {
         BlenderToOpenGL(22.04f, 77.04f, 14.00f), 40.00f, vec3(PLATFORM_SCALE)
@@ -593,7 +477,6 @@ std::vector<InstanceTransform> cavePlatform2_4Positions = {
 };
 
 // Platforms -- floors
-
 std::vector<InstanceTransform> cavePlatform2_2FloorPositions = {
     {
         BlenderToOpenGL(15.93f, 154.37f, -14.99f), 29.00f, vec3(PLATFORM_SCALE)
@@ -617,7 +500,6 @@ std::vector<InstanceTransform> cavePlatform2_2FloorPositions = {
         BlenderToOpenGL(6.18f, 35.50f, -14.99f), 117.00f, vec3(PLATFORM_SCALE)
     }
 };
-
 std::vector<InstanceTransform> cavePlatform2_4FloorPositions = {
     {
         BlenderToOpenGL(22.04f, 77.04f, -14.64f), 40.00f, vec3(PLATFORM_SCALE)
@@ -631,7 +513,6 @@ std::vector<InstanceTransform> cavePlatform2_4FloorPositions = {
 };
 
 // Temple
-
 std::vector<InstanceTransform> templePositions = {
     {
         BlenderToOpenGL(-36.20f, 122.53f, -7.33f), 116.00f, vec3(RUIN_SCALE)
@@ -640,7 +521,6 @@ std::vector<InstanceTransform> templePositions = {
         BlenderToOpenGL(-52.09f, 135.41f, -7.33f), 26.00f, vec3(RUIN_SCALE)
     }
 };
-
 
 int main()
 {
@@ -731,14 +611,14 @@ int main()
     Model CaveWall4_D("media/cave/CaveWalls4/CaveWalls4_D.obj");
 
     // -------------------------------------------------------------------------
-// Cave walls (collision meshes – CPU only)
-// -------------------------------------------------------------------------
+    // Cave walls (collision meshes – CPU only)
+    // -------------------------------------------------------------------------
     CollisionMesh CaveWall1_A_Collision = LoadCollisionMesh("media/cave/CaveWalls1/CaveWalls1_A_COL.obj");
     CollisionMesh CaveWall1_B_Collision = LoadCollisionMesh("media/cave/CaveWalls1/CaveWalls1_B_COL.obj");
     CollisionMesh CaveWall1_C_Collision = LoadCollisionMesh("media/cave/CaveWalls1/CaveWalls1_C_COL.obj");
-    CollisionMesh CaveWall1_D_Collision =  LoadCollisionMesh("media/cave/CaveWalls1/CaveWalls1_D_COL.obj");
+    CollisionMesh CaveWall1_D_Collision = LoadCollisionMesh("media/cave/CaveWalls1/CaveWalls1_D_COL.obj");
 
-    CollisionMesh CaveWall2_A_Collision =  LoadCollisionMesh("media/cave/CaveWalls2/CaveWalls2_A_COL.obj");
+    CollisionMesh CaveWall2_A_Collision = LoadCollisionMesh("media/cave/CaveWalls2/CaveWalls2_A_COL.obj");
     CollisionMesh CaveWall2_B_Collision = LoadCollisionMesh("media/cave/CaveWalls2/CaveWalls2_B_COL.obj");
     CollisionMesh CaveWall2_C_Collision = LoadCollisionMesh("media/cave/CaveWalls2/CaveWalls2_C_COL.obj");
     CollisionMesh CaveWall2_D_Collision = LoadCollisionMesh("media/cave/CaveWalls2/CaveWalls2_D_COL.obj");
@@ -786,7 +666,7 @@ int main()
         { &CaveWall1_C_Collision, &caveWall1_CPositions },
         { &CaveWall1_D_Collision, &caveWall1_DPositions },
 
-        //{ &CaveWall2_A_Collision, &caveWall2_APositions },
+        //{ &CaveWall2_A_Collision, &caveWall2_APositions }, // commented out to avoid awkward collision jank
         { &CaveWall2_B_Collision, &caveWall2_BPositions },
         { &CaveWall2_C_Collision, &caveWall2_CPositions },
 
@@ -806,7 +686,7 @@ int main()
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
 
-    
+
 
     // -------------------------------------------------------------------------
     // PROJECTION MATRIX
@@ -815,24 +695,13 @@ int main()
     //  Near plane
     //  Far plane
     // -----------------------------------------------------------------------------
-    projection = perspective(
-        radians(45.0f),
-        (float)windowWidth / (float)windowHeight,
-        0.1f,
-        700.0f
-    );
+    projection = perspective(radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 700.0f);
 
 
     {
-        const InstanceTransform& testInstance =
-            caveWall2_CPositions[0];
+        const InstanceTransform& testInstance = caveWall2_CPositions[0];
 
-        std::vector<glm::vec3> worldVerts =
-            TransformCollisionVertices(
-                CaveWall2_C_Collision,
-                testInstance,
-                LEVEL_OFFSET
-            );
+        std::vector<glm::vec3> worldVerts = TransformCollisionVertices(CaveWall2_C_Collision, testInstance, LEVEL_OFFSET);
 
         std::cout << "[COLLISION DEBUG] First 5 world vertices:\n";
         for (int i = 0; i < 5 && i < worldVerts.size(); ++i)
@@ -873,11 +742,7 @@ int main()
         {
             // Sample height at the *predicted* horizontal position (nextPosition),
             // so it matches what you're about to apply this frame.
-            float terrainHeight = GetTerrainHeightFromInstance(
-                terrainBowl,
-                nextPosition.x,
-                nextPosition.z
-            );
+            float terrainHeight = GetTerrainHeightFromInstance(terrainBowl, nextPosition.x, nextPosition.z);
 
             float minY = terrainHeight + PLAYER_HEIGHT;
 
@@ -896,11 +761,7 @@ int main()
             // X axis
             glm::vec3 testX(nextPosition.x, playerPosition.y, playerPosition.z);
 
-            if (CheckWallCollision(
-                testX,
-                wallCollisionGroups,
-                PLAYER_RADIUS,
-                LEVEL_OFFSET))
+            if (CheckWallCollision(testX, wallCollisionGroups, PLAYER_RADIUS, LEVEL_OFFSET))
             {
                 nextPosition.x = playerPosition.x;
             }
@@ -908,11 +769,7 @@ int main()
             // Z axis
             glm::vec3 testZ(nextPosition.x, playerPosition.y, nextPosition.z);
 
-            if (CheckWallCollision(
-                testZ,
-                wallCollisionGroups,
-                PLAYER_RADIUS,
-                LEVEL_OFFSET))
+            if (CheckWallCollision(testZ, wallCollisionGroups, PLAYER_RADIUS, LEVEL_OFFSET))
             {
                 nextPosition.z = playerPosition.z;
             }
@@ -920,7 +777,7 @@ int main()
 
 
 
-        
+
         // Apply
         playerPosition = nextPosition;
 
@@ -938,12 +795,8 @@ int main()
         // ---------------------------------------------------------------------
         // VIEW MATRIX
         // ---------------------------------------------------------------------
-        view = lookAt(
-            cameraPosition,
-            cameraPosition + cameraFront,
-            cameraUp
-        );
-        
+        view = lookAt(cameraPosition, cameraPosition + cameraFront, cameraUp);
+
         // ---------------------------------------------------------------------
         // TERRAIN
         // ---------------------------------------------------------------------
@@ -955,7 +808,7 @@ int main()
         SetMatrices(terrainShaders);
         DrawTerrain(terrainBowl);
 
-       
+
         // ---------------------------------------------------------------------
         // CAVE WALLS 
         // ---------------------------------------------------------------------
@@ -987,7 +840,7 @@ int main()
         DrawInstances(Shaders, TempleOfApollo, templePositions, LEVEL_OFFSET);
 
 
-        
+
 
         // Swap buffers & poll events
         glfwSwapBuffers(window);
@@ -999,8 +852,9 @@ int main()
 }
 
 // -----------------------------------------------------------------------------
-// CALLBACKS
+// CALLBACKS & INPUT
 // -----------------------------------------------------------------------------
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
@@ -1075,15 +929,11 @@ void ProcessUserInput(GLFWwindow* window)
         playerVelocity += right * moveSpeed;
 }
 
-
 // -----------------------------------------------------------------------------
 // MVP UPLOAD
-//
-// Must be called AFTER any change to model or view.
 // -----------------------------------------------------------------------------
 void SetMatrices(Shader& ShaderProgramIn)
 {
     mvp = projection * view * model;
     ShaderProgramIn.setMat4("mvpIn", mvp);
 }
-
