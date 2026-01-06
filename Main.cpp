@@ -101,6 +101,7 @@ constexpr float WORLD_SCALE = 1.0f;
 
 constexpr float CAVE_SCALE = WORLD_SCALE * 0.5f;
 constexpr float PLATFORM_SCALE = WORLD_SCALE * 1.5f;
+constexpr float PILLAR_SCALE = WORLD_SCALE * 4.5f;
 constexpr float RUIN_SCALE = WORLD_SCALE * 1.0f;
 constexpr float STATUE_SCALE = WORLD_SCALE * 0.2f;
 
@@ -349,7 +350,7 @@ void DrawInstances(Shader& shader, Model& modelAsset, const std::vector<Instance
 // -----------------------------------------------------------------------------
 
 // Walls
-std::vector<InstanceTransform> caveWall1_APositions = {
+vector<InstanceTransform> caveWall1_APositions = {
     {
         BlenderToOpenGL(16.82f, 96.48f, 0.00f), 0.00f, vec3(CAVE_SCALE)
     },
@@ -360,12 +361,12 @@ std::vector<InstanceTransform> caveWall1_APositions = {
         BlenderToOpenGL(27.51f, 120.49f, 0.00f), 0.00f, vec3(CAVE_SCALE)
     }
 };
-std::vector<InstanceTransform> caveWall1_BPositions = {
+vector<InstanceTransform> caveWall1_BPositions = {
     {
         BlenderToOpenGL(-2.81f, 138.38f, 0.00f), 199.00f, vec3(CAVE_SCALE)
     }
 };
-std::vector<InstanceTransform> caveWall1_CPositions = {
+vector<InstanceTransform> caveWall1_CPositions = {
     {
         BlenderToOpenGL(3.95f, 66.21f, 0.00f), 60.00f, vec3(CAVE_SCALE)
     },
@@ -379,7 +380,7 @@ std::vector<InstanceTransform> caveWall1_CPositions = {
         BlenderToOpenGL(80.91f, 149.79f, 0.00f), -13.00f, vec3(CAVE_SCALE)
     }
 };
-std::vector<InstanceTransform> caveWall1_DPositions = {
+vector<InstanceTransform> caveWall1_DPositions = {
     {
         BlenderToOpenGL(-11.23f, 125.48f, 0.00f), 69.00f, vec3(CAVE_SCALE)
     },
@@ -397,7 +398,7 @@ std::vector<InstanceTransform> caveWall1_DPositions = {
     }
 };
 
-std::vector<InstanceTransform> caveWall2_APositions = {
+vector<InstanceTransform> caveWall2_APositions = {
     {
         BlenderToOpenGL(0.00f, 0.00f, 0.00f), 0.00f, vec3(CAVE_SCALE)
     },
@@ -414,7 +415,7 @@ std::vector<InstanceTransform> caveWall2_APositions = {
         BlenderToOpenGL(-2.98f, 119.03f, 0.00f), 248.00f, vec3(CAVE_SCALE)
     }
 };
-std::vector<InstanceTransform> caveWall2_BPositions = {
+vector<InstanceTransform> caveWall2_BPositions = {
     {
         BlenderToOpenGL(21.24f, -13.29f, 0.00f), 294.00f, vec3(CAVE_SCALE)
     },
@@ -422,7 +423,7 @@ std::vector<InstanceTransform> caveWall2_BPositions = {
         BlenderToOpenGL(-22.12f, -13.29f, 0.00f), 242.00f, vec3(CAVE_SCALE)
     }
 };
-std::vector<InstanceTransform> caveWall2_CPositions = {
+vector<InstanceTransform> caveWall2_CPositions = {
     {
         BlenderToOpenGL(50.12f, 66.44f, 0.00f), 250.00f, vec3(CAVE_SCALE)
     },
@@ -440,7 +441,7 @@ std::vector<InstanceTransform> caveWall2_CPositions = {
     }
 };
 
-std::vector<InstanceTransform> caveWall3Positions = {
+vector<InstanceTransform> caveWall3Positions = {
     {
         BlenderToOpenGL(-12.00f, 32.00f, 0.00f), 75.00f,  vec3(CAVE_SCALE)
     },
@@ -455,24 +456,24 @@ std::vector<InstanceTransform> caveWall3Positions = {
     }
 };
 
-std::vector<InstanceTransform> caveWall4_APositions = {
+vector<InstanceTransform> caveWall4_APositions = {
     {
         BlenderToOpenGL(-35.79f, 162.31f, 0.00f),  13.00f, vec3(CAVE_SCALE)
     }
 };
-std::vector<InstanceTransform> caveWall4_DPositions = {
+vector<InstanceTransform> caveWall4_DPositions = {
     {
         BlenderToOpenGL(53.34f, 107.70f, -5.03f), 0.00f,  vec3(CAVE_SCALE)
     }
 };
 
 // Platforms -- ceiling
-std::vector<InstanceTransform> cavePlatform2_1Positions = {
+vector<InstanceTransform> cavePlatform2_1Positions = {
     {
         BlenderToOpenGL(4.76f, 28.36f, 14.50f), 279.00f, vec3(PLATFORM_SCALE)
     }
 };
-std::vector<InstanceTransform> cavePlatform2_2Positions = {
+vector<InstanceTransform> cavePlatform2_2Positions = {
     {
         BlenderToOpenGL(15.93f, 154.37f, 15.00f), 29.00f, vec3(PLATFORM_SCALE)
     },
@@ -492,14 +493,14 @@ std::vector<InstanceTransform> cavePlatform2_2Positions = {
         BlenderToOpenGL(4.83f, 110.31f, 14.50f), 221.00f, vec3(PLATFORM_SCALE)
     }
 };
-std::vector<InstanceTransform> cavePlatform2_4Positions = {
+vector<InstanceTransform> cavePlatform2_4Positions = {
     {
         BlenderToOpenGL(22.04f, 77.04f, 14.00f), 40.00f, vec3(PLATFORM_SCALE)
     }
 };
 
 // Platforms -- floors
-std::vector<InstanceTransform> cavePlatform2_2FloorPositions = {
+vector<InstanceTransform> cavePlatform2_2FloorPositions = {
     {
         BlenderToOpenGL(15.93f, 154.37f, -14.99f), 29.00f, vec3(PLATFORM_SCALE)
     },
@@ -522,7 +523,7 @@ std::vector<InstanceTransform> cavePlatform2_2FloorPositions = {
         BlenderToOpenGL(6.18f, 35.50f, -14.99f), 117.00f, vec3(PLATFORM_SCALE)
     }
 };
-std::vector<InstanceTransform> cavePlatform2_4FloorPositions = {
+vector<InstanceTransform> cavePlatform2_4FloorPositions = {
     {
         BlenderToOpenGL(22.04f, 77.04f, -14.64f), 40.00f, vec3(PLATFORM_SCALE)
     },
@@ -534,8 +535,21 @@ std::vector<InstanceTransform> cavePlatform2_4FloorPositions = {
     }
 };
 
+// Pillars
+vector<InstanceTransform> cavePillarPositions = {
+    {
+        BlenderToOpenGL(16.82f, 96.48f, -7.35f), 0.00f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(42.46f, 86.03f, -7.35f), 0.00f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(27.51f, 120.49f, -7.35f), 0.00f, vec3(PILLAR_SCALE)
+    }
+};
+
 // Temple
-std::vector<InstanceTransform> templePositions = {
+vector<InstanceTransform> templePositions = {
     {
         BlenderToOpenGL(-36.20f, 122.53f, -7.33f), 116.00f, vec3(RUIN_SCALE)
     },
@@ -668,6 +682,10 @@ int main()
     CollisionMesh CavePlatform2_2_Collision = LoadCollisionMesh("media/cave/CavePlatform2/CavePlatform2_2_COL.obj");
     CollisionMesh CavePlatform2_3_Collision = LoadCollisionMesh("media/cave/CavePlatform2/CavePlatform2_3_COL.obj");
     CollisionMesh CavePlatform2_4_Collision = LoadCollisionMesh("media/cave/CavePlatform2/CavePlatform2_4_COL.obj");
+
+    Model GenericTexture("media/Ruins/generic.obj");
+    // Cave pillars
+	Model CavePillar("media/Ruins/Pillar_egyptian/obj/objPillar.obj");
 
     // -------------------------------------------------------------------------
     // Ruins (visual)
@@ -867,7 +885,7 @@ int main()
         // ---------------------------------------------------------------------
         Shaders.use();
         // Cave walls
-        DrawInstances(Shaders, CaveWall1_A, caveWall1_APositions, LEVEL_OFFSET);
+        //DrawInstances(Shaders, CaveWall1_A, caveWall1_APositions, LEVEL_OFFSET);
         DrawInstances(Shaders, CaveWall1_B, caveWall1_BPositions, LEVEL_OFFSET);
         DrawInstances(Shaders, CaveWall1_C, caveWall1_CPositions, LEVEL_OFFSET);
         DrawInstances(Shaders, CaveWall1_D, caveWall1_DPositions, LEVEL_OFFSET);
@@ -889,9 +907,14 @@ int main()
         DrawInstances(Shaders, CavePlatform2_2, cavePlatform2_2FloorPositions, LEVEL_OFFSET);
         DrawInstances(Shaders, CavePlatform2_4, cavePlatform2_4FloorPositions, LEVEL_OFFSET);
 
+        
+
         // Temple
         DrawInstances(Shaders, TempleOfApollo, templePositions, LEVEL_OFFSET);
 
+		DrawInstances(Shaders, GenericTexture, templePositions, LEVEL_OFFSET);
+        // Cave pillars
+        DrawInstances(Shaders, CavePillar, cavePillarPositions, LEVEL_OFFSET);
 
 
 
