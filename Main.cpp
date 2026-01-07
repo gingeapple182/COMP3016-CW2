@@ -351,15 +351,7 @@ void DrawInstances(Shader& shader, Model& modelAsset, const std::vector<Instance
 
 // Walls
 vector<InstanceTransform> caveWall1_APositions = {
-    {
-        BlenderToOpenGL(16.82f, 96.48f, 0.00f), 0.00f, vec3(CAVE_SCALE)
-    },
-    {
-        BlenderToOpenGL(42.46f, 86.03f, 0.00f), 0.00f, vec3(CAVE_SCALE)
-    },
-    {
-        BlenderToOpenGL(27.51f, 120.49f, 0.00f), 0.00f, vec3(CAVE_SCALE)
-    }
+    // -- //
 };
 vector<InstanceTransform> caveWall1_BPositions = {
     {
@@ -545,6 +537,54 @@ vector<InstanceTransform> cavePillarPositions = {
     },
     {
         BlenderToOpenGL(27.51f, 120.49f, -7.35f), 0.00f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-40.27f, 119.20f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-45.65f, 121.63f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-35.05f, 116.93f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-29.68f, 114.50f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-50.44f, 124.02f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-55.81f, 126.44f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-61.03f, 128.72f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-58.59f, 134.45f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-27.23f, 120.23f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-22.45f, 131.23f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-53.81f, 145.45f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-56.25f, 139.72f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-24.89f, 125.50f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-51.57f, 150.29f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-20.22f, 136.07f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
+    },
+    {
+        BlenderToOpenGL(-36.19f, 143.20f, -8.03f), 66.93f, vec3(PILLAR_SCALE)
     }
 };
 
@@ -557,6 +597,14 @@ vector<InstanceTransform> templePositions = {
         BlenderToOpenGL(-52.09f, 135.41f, -7.33f), 26.00f, vec3(RUIN_SCALE)
     }
 };
+
+// R2D2
+vector<InstanceTransform> r2d2Positions = {
+	{
+		BlenderToOpenGL(-38.35f,  130.43f, -7.77f), 156.00f, vec3(WORLD_SCALE)
+	}
+};
+
 
 int main()
 {
@@ -684,18 +732,18 @@ int main()
     CollisionMesh CavePlatform2_4_Collision = LoadCollisionMesh("media/cave/CavePlatform2/CavePlatform2_4_COL.obj");
 
     Model GenericTexture("media/Ruins/generic.obj");
-    // Cave pillars
+
+    // -------------------------------------------------------------------------
+    // Cave pillars (visual)
+    // -------------------------------------------------------------------------
 	Model CavePillar("media/Ruins/Pillar_egyptian/obj/objPillar.obj");
 
     // -------------------------------------------------------------------------
-    // Ruins (visual)
+    // Cave pillars (collision meshes - CPU only)
     // -------------------------------------------------------------------------
-    Model TempleOfApollo("media/ruins/temple of apollo.obj");
+	CollisionMesh CavePillar_Collision = LoadCollisionMesh("media/Ruins/Pillar_egyptian/obj/objPillar_COL.obj");
 
-    // -------------------------------------------------------------------------
-    // Ruins (collision meshes – CPU only)
-    // -------------------------------------------------------------------------
-    CollisionMesh TempleOfApollo_Collision = LoadCollisionMesh("media/ruins/temple of apollo_COL.obj");
+	Model R2D2("media/Statues/Low_Poly_R2D2.obj");
 
 
     // -------------------------------------------------------------------------
@@ -714,13 +762,15 @@ int main()
         { &CaveWall3_Collision,   &caveWall3Positions },
 
         { &CaveWall4_A_Collision, &caveWall4_APositions },
-        { &CaveWall4_D_Collision, &caveWall4_DPositions }
+        { &CaveWall4_D_Collision, &caveWall4_DPositions },
+
+		{ &CavePillar_Collision,   &cavePillarPositions}
     };
 
     // -------------------------------------------------------------------------
     // WIN CONDITION SETUP (temporary test)
     // -------------------------------------------------------------------------
-    const InstanceTransform& artefactTransform = caveWall4_DPositions[0];
+    const InstanceTransform& artefactTransform = r2d2Positions[0];
     const float TRIGGER_RADIUS = 10.0f;
 
     Shaders.use();
@@ -907,15 +957,14 @@ int main()
         DrawInstances(Shaders, CavePlatform2_2, cavePlatform2_2FloorPositions, LEVEL_OFFSET);
         DrawInstances(Shaders, CavePlatform2_4, cavePlatform2_4FloorPositions, LEVEL_OFFSET);
 
-        
-
-        // Temple
-        DrawInstances(Shaders, TempleOfApollo, templePositions, LEVEL_OFFSET);
-
+        // Generic fake asset for shader fixing
 		DrawInstances(Shaders, GenericTexture, templePositions, LEVEL_OFFSET);
+
         // Cave pillars
         DrawInstances(Shaders, CavePillar, cavePillarPositions, LEVEL_OFFSET);
 
+		// R2D2
+		DrawInstances(Shaders, R2D2, r2d2Positions, LEVEL_OFFSET);
 
 
         // Swap buffers & poll events
