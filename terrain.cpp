@@ -12,10 +12,6 @@
 #define TERRAIN_MAP_SIZE (TERRAIN_RENDER_DIST * TERRAIN_RENDER_DIST)
 constexpr float TERRAIN_SPACING = 1.0f;
 
-//static GLuint terrainVAO = 0;
-//static GLuint terrainVBO = 0;
-//static GLuint terrainEBO = 0;
-
 static GLfloat terrainVertices[TERRAIN_MAP_SIZE][6];
 static GLuint terrainIndices[(TERRAIN_MAP_SIZE - 1) * (TERRAIN_RENDER_DIST - 1) * 2][3];
 
@@ -24,7 +20,6 @@ constexpr glm::vec2 CAVE_CENTER = glm::vec2(0.0f, 0.0f);
 constexpr float BOWL_RADIUS = 300.0f;
 constexpr float BOWL_DEPTH = -18.0f;
 constexpr float BOWL_HEIGHT = 25.0f;
-
 
 
 void InitialiseTerrain(TerrainInstance& terrain, bool inverted)
@@ -62,8 +57,8 @@ void InitialiseTerrain(TerrainInstance& terrain, bool inverted)
 
         // --- Perlin noise (sand roughness) ---
         float noiseValue = noise.GetNoise(
-            xOffset * 0.1f,
-            zOffset * 0.1f
+            xOffset * 0.2f,
+            zOffset * 0.2f
         );
 
         // Strength of sand variation

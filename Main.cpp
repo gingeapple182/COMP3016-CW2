@@ -469,6 +469,78 @@ vector<InstanceTransform> caveWall3Positions = {
         BlenderToOpenGL(100.01f, 96.51f, 0.00f), 67.00f, vec3(CAVE_SCALE)
     }
 };
+vector<InstanceTransform> caveWall3Invisible = {
+    {
+        BlenderToOpenGL(52.91f, -5.19f, 0.00f),
+        217.21f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(93.40f, 21.91f, 0.00f),
+        217.21f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(134.47f, 44.56f, 0.00f),
+        217.21f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(155.54f, 93.84f, 0.00f),
+        275.45f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(150.51f, 152.45f, 0.00f),
+        279.38f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(116.01f, 198.65f, 0.00f),
+        329.36f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(57.29f, 222.53f, 0.00f),
+        346.24f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(8.14f, 226.64f, 0.00f),
+        370.72f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(-43.90f, 214.26f, 0.00f),
+        379.03f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(-91.45f, 191.94f, 0.00f),
+        394.21f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(-114.91f, 141.84f, 0.00f),
+        457.29f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(-82.69f, 89.55f, 0.00f),
+        669.55f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(-61.02f, 34.55f, 0.00f),
+        636.30f,
+        vec3(CAVE_SCALE)
+    },
+    {
+        BlenderToOpenGL(-50.77f, -3.01f, 0.00f),
+        490.73f,
+        vec3(CAVE_SCALE)
+    }
+};
 
 vector<InstanceTransform> caveWall4_APositions = {
     {
@@ -485,7 +557,13 @@ vector<InstanceTransform> caveWall4_DPositions = {
 vector<InstanceTransform> cavePlatform2_1Positions = {
     {
         BlenderToOpenGL(4.76f, 28.36f, 14.50f), 279.00f, vec3(PLATFORM_SCALE)
-    }
+    },
+    {
+        BlenderToOpenGL(41.27f, 12.06f, -0.90f), 279.00f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(131.38f, 148.29f, -0.90f), 477.99f, vec3(PLATFORM_SCALE)
+    },
 };
 vector<InstanceTransform> cavePlatform2_2Positions = {
     {
@@ -510,6 +588,39 @@ vector<InstanceTransform> cavePlatform2_2Positions = {
 vector<InstanceTransform> cavePlatform2_4Positions = {
     {
         BlenderToOpenGL(22.04f, 77.04f, 14.00f), 40.00f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(-38.05f, 2.76f, -3.10f), 40.00f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(37.87f, 42.95f, 14.00f), 40.00f, vec3(PLATFORM_SCALE)
+    }, 
+    {
+        BlenderToOpenGL(80.26f, 61.81f, 14.00f), 40.00f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(104.68f, 105.10f, 14.00f), 40.00f, vec3(PLATFORM_SCALE)
+    }, 
+    {
+        BlenderToOpenGL(60.32f, 173.49f, 11.52f), 181.65f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(107.81f, 150.69f, 11.61f), 181.65f, vec3(PLATFORM_SCALE)
+    }, 
+    {
+        BlenderToOpenGL(11.59f, 186.29f, 11.52f), 212.51f, vec3(PLATFORM_SCALE)
+    }, 
+    {
+        BlenderToOpenGL(-35.35f, 173.52f, 11.52f), 212.51f, vec3(PLATFORM_SCALE)
+    }, 
+    {
+        BlenderToOpenGL(-55.85f, 110.10f, 11.52f), 334.42f, vec3(PLATFORM_SCALE)
+    }, 
+    {
+        BlenderToOpenGL(-18.98f, 77.45f, 11.52f), 303.68f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(-26.34f, 29.27f, 11.52f), 303.68f, vec3(PLATFORM_SCALE)
     }
 };
 
@@ -535,6 +646,39 @@ vector<InstanceTransform> cavePlatform2_2FloorPositions = {
     },
     {
         BlenderToOpenGL(6.18f, 35.50f, -14.99f), 117.00f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(67.98f, 31.75f, 1.88f), 258.73f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(114.78f, 57.08f, 2.19f), 221.53f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(134.72f, 98.21f, 0.72f), 321.17f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(-54.80f, 90.33f, -0.71f), 369.23f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(-37.53f, 48.00f, -3.04f), 269.58f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(-73.72f, 178.65f, -0.26f), 400.69f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(-94.27f, 137.81f, -1.73f), 500.34f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(-39.67f, 193.95f, 2.37f), 431.45f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(9.52f, 204.75f, 2.37f), 431.45f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(53.67f, 199.27f, 2.37f), 397.90f, vec3(PLATFORM_SCALE)
+    },
+    {
+        BlenderToOpenGL(97.14f, 177.91f, 2.37f), 397.90f, vec3(PLATFORM_SCALE)
     }
 };
 vector<InstanceTransform> cavePlatform2_4FloorPositions = {
@@ -801,6 +945,7 @@ int main()
         { &CaveWall2_C_Collision, &caveWall2_CPositions },
 
         { &CaveWall3_Collision,   &caveWall3Positions },
+        { &CaveWall3_Collision,   &caveWall3Invisible},
 
         { &CaveWall4_A_Collision, &caveWall4_APositions },
         { &CaveWall4_D_Collision, &caveWall4_DPositions },
@@ -820,7 +965,7 @@ int main()
     vec3 r2WorldPos = artefactTransform.position + LEVEL_OFFSET;
 
     artefactHum = soundEngine->play3D(
-        "media/Audio/underwater_engine.mp3",
+        "media/Audio/cd-player-mechanics.wav",
         vec3df(r2WorldPos.x, r2WorldPos.y, r2WorldPos.z),
         true,    // loop
         false,   // start immediately
@@ -829,9 +974,9 @@ int main()
 
     if (artefactHum)
     {
-        artefactHum->setVolume(0.35f);
+        artefactHum->setVolume(0.75f);
         artefactHum->setMinDistance(5.0f);   // full volume near R2
-        artefactHum->setMaxDistance(30.0f);  // fades out naturally
+        artefactHum->setMaxDistance(50.0f);  // fades out naturally
     }
 
     Shaders.use();
