@@ -21,12 +21,16 @@
 #include <learnopengl/shader_m.h>
 #include <learnopengl/model.h>
 
+// IRRKLANG
+#include <irrKlang.h>
+
 // PROJECT
 #include "main.h"
 #include "terrain.h"
 
 using namespace std;
 using namespace glm;
+using namespace irrklang;
 
 // -----------------------------------------------------------------------------
 // WINDOW & OPENGL STATE
@@ -67,6 +71,18 @@ float cameraPitch = 0.0f;
 bool  mouseFirstEntry = true;
 float cameraLastXPos = 800.0f / 2.0f;
 float cameraLastYPos = 600.0f / 2.0f;
+
+// -----------------------------------------------------------------------------
+// AUDIO
+// -----------------------------------------------------------------------------
+
+ISoundEngine* soundEngine = nullptr;
+ISound* outsideMusic = nullptr;
+ISound* caveMusic = nullptr;
+ISound* artefactHum = nullptr;
+
+bool isInsideCave = false;
+
 
 // -----------------------------------------------------------------------------
 // GODMODE TOGGLES
@@ -315,6 +331,12 @@ bool CheckWinCondition(const vec3& playerPos, const InstanceTransform& trigger, 
     float distance = length(playerXZ - triggerXZ);
     return distance <= radius;
 }
+
+const vec3 CAVE_TRIGGER_POS = BlenderToOpenGL(18.31f, 65.78f, 0.00f) + LEVEL_OFFSET;
+const float CAVE_TRIGGER_RADIUS = 110.0f;
+
+const vec3 CAVE_ZONE_CENTER = vec3(19.5f, 0.0f, -68.5f) + LEVEL_OFFSET;
+
 
 // -----------------------------------------------------------------------------
 // RENDERING HELPERS
@@ -606,6 +628,8 @@ vector<InstanceTransform> r2d2Positions = {
 };
 
 
+
+
 int main()
 {
     // -------------------------------------------------------------------------
@@ -640,6 +664,23 @@ int main()
         cout << "GLAD failed to initialise\n";
         return -1;
     }
+
+    // -------------------------------------------------------------------------
+    // AUDIO INITIALISATION
+    // -------------------------------------------------------------------------
+    soundEngine = createIrrKlangDevice();
+
+    if (!soundEngine)
+    {
+        std::cerr << "[AUDIO] Failed to initialise irrKlang\n";
+    }
+    else
+    {
+        std::cout << "[AUDIO] irrKlang initialised successfully\n";
+		
+
+    }
+
 
     // Enable depth testing so closer objects obscure farther ones
     glEnable(GL_DEPTH_TEST);
@@ -772,6 +813,26 @@ int main()
     // -------------------------------------------------------------------------
     const InstanceTransform& artefactTransform = r2d2Positions[0];
     const float TRIGGER_RADIUS = 10.0f;
+
+    // -------------------------------------------------------------------------
+    // R2D2 / Artefact 3D audio
+    // -------------------------------------------------------------------------
+    vec3 r2WorldPos = artefactTransform.position + LEVEL_OFFSET;
+
+    artefactHum = soundEngine->play3D(
+        "media/Audio/underwater_engine.mp3",
+        vec3df(r2WorldPos.x, r2WorldPos.y, r2WorldPos.z),
+        true,    // loop
+        false,   // start immediately
+        true     // track sound
+    );
+
+    if (artefactHum)
+    {
+        artefactHum->setVolume(0.35f);
+        artefactHum->setMinDistance(5.0f);   // full volume near R2
+        artefactHum->setMaxDistance(30.0f);  // fades out naturally
+    }
 
     Shaders.use();
 
@@ -906,6 +967,52 @@ int main()
         cameraPosition = playerPosition;
 
 
+        soundEngine->setListenerPosition(vec3df(cameraPosition.x, cameraPosition.y, cameraPosition.z), vec3df(cameraFront.x, cameraFront.y, cameraFront.z));
+
+        // ---------------------------------------------------------------------
+        // CAVE MUSIC TRIGGER
+        // ---------------------------------------------------------------------
+        {
+            vec2 playerXZ(playerPosition.x, playerPosition.z);
+            vec2 caveXZ(CAVE_ZONE_CENTER.x, CAVE_ZONE_CENTER.z);
+
+            bool nowInside = length(playerXZ - caveXZ) <= CAVE_TRIGGER_RADIUS;
+
+            // Enter cave
+            if (nowInside && !isInsideCave)
+            {
+                isInsideCave = true;
+
+                if (outsideMusic)
+                {
+                    outsideMusic->stop();
+                    outsideMusic->drop();
+                    outsideMusic = nullptr;
+                }
+
+                caveMusic = soundEngine->play2D("media/Audio/cave themeb4.ogg", true, false, true);
+
+                caveMusic->setVolume(0.8f);
+            }
+
+            // Exit cave
+            if (!nowInside && isInsideCave)
+            {
+                isInsideCave = false;
+
+                if (caveMusic)
+                {
+                    caveMusic->stop();
+                    caveMusic->drop();
+                    caveMusic = nullptr;
+                }
+
+                outsideMusic = soundEngine->play2D("media/Audio/caravan.ogg.ogg", true, false, true);
+
+                outsideMusic->setVolume(0.9f);
+            }
+        }
+        
         // Clear buffers
         glClearColor(0.25f, 0.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -972,6 +1079,11 @@ int main()
         glfwPollEvents();
     }
 
+    if (soundEngine)
+    {
+        soundEngine->drop();
+        soundEngine = nullptr;
+    }
     glfwTerminate();
     return 0;
 }
