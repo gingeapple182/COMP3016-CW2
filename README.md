@@ -43,6 +43,14 @@ Typical sources for CC0 assets include:
 
 Turbosquid
 
+"Cave Walls 1 - Base" (https://www.turbosquid.com/3d-models/3d-cave-walls-1-base-2076385)
+"Cave Walls 2 - Base" (https://www.turbosquid.com/3d-models/cave-walls-2-base-3d-model-2081619)
+"Cave Wall 3 - Base" (https://www.turbosquid.com/3d-models/3d-cave-wall-3-base-2080922)
+"Cave Walls 4 - Base" (https://www.turbosquid.com/3d-models/cave-walls-4-base-3d-model-2082475)
+"Cave Platform 2 - Base" (https://www.turbosquid.com/3d-models/3d-cave-platform-2-base-2068878)
+"Ancient egyptian pillar" (https://www.turbosquid.com/3d-models/ancient-egyptian-pillar-3d-model-2251671)
+
+
 Sketchfab
 
 These assets were often modified within Blender (e.g. scale adjustment, decimation, collision mesh creation, texture reassignment) to better suit the project’s visual style and performance requirements.
