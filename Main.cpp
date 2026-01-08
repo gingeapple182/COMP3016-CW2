@@ -960,7 +960,7 @@ int main()
     // -------------------------------------------------------------------------
     // Cave pillars (collision meshes - CPU only)
     // -------------------------------------------------------------------------
-	CollisionMesh CavePillar_Collision = LoadCollisionMesh("media/Ruins/Pillar_egyptian/obj/objPillar_COL.obj");
+	CollisionMesh CavePillar_Collision = LoadCollisionMesh("media/Ruins/Pillar_egyptian/models/objPillar_COL.obj");
 
 	Model R2D2("media/Statues/Low_Poly_R2D2.obj");
 

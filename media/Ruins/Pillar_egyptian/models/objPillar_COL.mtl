@@ -1,0 +1,24 @@
+# Blender 3.6.22 MTL File: 'COMP3016 CW2.blend'
+# www.blender.org
+
+newmtl lambert30SG.017
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd -s_0.5_0.5_germany010_-_còpia.jpg
+map_Bump -bm 0.070000 -s_0.5_0.5_germany010b.jpg
+
+newmtl pilars_lambert13SG.017
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 1
+map_Kd -s_0.5_0.5_egypt_b2.jpg
+map_Bump -bm 0.070000 -s_0.5_0.5_egypt_011b.jpg

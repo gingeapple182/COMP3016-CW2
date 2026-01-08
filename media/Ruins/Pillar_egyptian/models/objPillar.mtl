@@ -1,0 +1,16 @@
+newmtl lambert30SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd -s_0.5_0.5_germany010_-_còpia.jpg
+bump  -bm 0.07 -s_0.5_0.5_germany010b.jpg
+Ni 1.00
+newmtl pilars_lambert13SG
+illum 4
+Kd 0.00 0.00 0.00
+Ka 0.00 0.00 0.00
+Tf 1.00 1.00 1.00
+map_Kd -s_0.5_0.5_egypt_b2.jpg
+bump  -bm 0.07 -s_0.5_0.5_egypt_011b.jpg
+Ni 1.00
