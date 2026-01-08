@@ -10,5 +10,5 @@ uniform sampler2D texture_diffuse1;
 void main()
 {
     //Setting of colour coordinates to colour map
-    FragColor = texture(texture_diffuse1, textureFrag);
+    FragColor = texture(texture_diffuse1, textureFrag); 
 }

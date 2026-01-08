@@ -1012,7 +1012,7 @@ int main()
 
     if (artefactHum)
     {
-        artefactHum->setVolume(0.75f);
+        artefactHum->setVolume(1.0f);
         artefactHum->setMinDistance(5.0f);   // full volume near R2
         artefactHum->setMaxDistance(50.0f);  // fades out naturally
     }
