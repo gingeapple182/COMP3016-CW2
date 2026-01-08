@@ -955,7 +955,7 @@ int main()
     // -------------------------------------------------------------------------
     // Cave pillars (visual)
     // -------------------------------------------------------------------------
-	Model CavePillar("media/Ruins/Pillar_egyptian/obj/objPillar.obj");
+	Model CavePillar("media/Ruins/Pillar_egyptian/models/objPillar.obj");
 
     // -------------------------------------------------------------------------
     // Cave pillars (collision meshes - CPU only)
