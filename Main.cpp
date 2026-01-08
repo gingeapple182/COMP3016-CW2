@@ -50,8 +50,8 @@ GLuint Buffers[NumBuffers];
 // GAME STATE
 // -----------------------------------------------------------------------------
 
-int collectedArtifacts = 0;
-const int totalArtifacts = 3;
+int COLLECTABLES_FOUND = 0;
+const int TOTAL_COLLECTABLES = 3;
 bool gameWon = false;
 
 // -----------------------------------------------------------------------------
@@ -80,6 +80,7 @@ ISoundEngine* soundEngine = nullptr;
 ISound* outsideMusic = nullptr;
 ISound* caveMusic = nullptr;
 ISound* artefactHum = nullptr;
+ISound* coinCollectSound = nullptr;
 
 bool isInsideCave = false;
 
@@ -145,6 +146,12 @@ struct InstanceTransform
     vec3 position;
     float rotationY;
     vec3 scale;
+};
+
+struct Collectable
+{
+    InstanceTransform transform;
+    bool collected = false;
 };
 
 struct CollisionGroup
@@ -295,7 +302,7 @@ constexpr float PLAYER_HEIGHT = 6.1f * WORLD_SCALE;
 constexpr float PLAYER_RADIUS = 0.35f * WORLD_SCALE;
 
 // -----------------------------------------------------------------------------
-// SCENE ANCHOR + HELPERS
+// MISC
 // 
 // BlenderToOPenGL: Converts Blender world coordinates to OpenGL world coordinates
 // Blender: X = left/right, Y = forward, Z = up
@@ -336,6 +343,19 @@ const vec3 CAVE_TRIGGER_POS = BlenderToOpenGL(18.31f, 65.78f, 0.00f) + LEVEL_OFF
 const float CAVE_TRIGGER_RADIUS = 110.0f;
 
 const vec3 CAVE_ZONE_CENTER = vec3(19.5f, 0.0f, -68.5f) + LEVEL_OFFSET;
+
+bool CheckCollectableTrigger(const vec3& playerPos, const Collectable& c, float radius)
+{
+    if (c.collected)
+        return false;
+
+    vec3 worldPos = c.transform.position + LEVEL_OFFSET;
+
+    vec2 playerXZ(playerPos.x, playerPos.z);
+    vec2 collectableXZ(worldPos.x, worldPos.z);
+
+    return length(playerXZ - collectableXZ) <= radius;
+}
 
 
 // -----------------------------------------------------------------------------
@@ -392,7 +412,10 @@ vector<InstanceTransform> caveWall1_CPositions = {
     },
     {
         BlenderToOpenGL(80.91f, 149.79f, 0.00f), -13.00f, vec3(CAVE_SCALE)
-    }
+    },
+	{
+		BlenderToOpenGL(78.35f,  141.27f, -20.00f), 66.75f, vec3(CAVE_SCALE)
+	}
 };
 vector<InstanceTransform> caveWall1_DPositions = {
     {
@@ -767,11 +790,27 @@ vector<InstanceTransform> templePositions = {
 // R2D2
 vector<InstanceTransform> r2d2Positions = {
 	{
-		BlenderToOpenGL(-38.35f,  130.43f, -7.77f), 156.00f, vec3(WORLD_SCALE)
+		BlenderToOpenGL(75.85f, 141.95f, -7.05f), 71.00f, vec3(WORLD_SCALE)
 	}
 };
 
+vector<Collectable> holocronPositions = {
+    {
+        BlenderToOpenGL(-40.00f,  132.65f, -2.60f), 0.0f, vec3(WORLD_SCALE)
+    }
+};
 
+vector<Collectable> coinPositions = {
+    {
+        BlenderToOpenGL(-18.30f,  104.20f, 0.00f), 0.0f, vec3(WORLD_SCALE)
+    },
+    {
+        BlenderToOpenGL(95.50f,  127.80f, 0.00f), 0.0f, vec3(WORLD_SCALE)
+    },
+    {
+        BlenderToOpenGL(-7.10f,  151.65f, 0.00f), 0.0f, vec3(WORLD_SCALE)
+    }
+};
 
 
 int main()
@@ -909,13 +948,8 @@ int main()
     Model CavePlatform2_4("media/cave/CavePlatform2/CavePlatform2_4.obj");
 
     // -------------------------------------------------------------------------
-    // Cave platforms (collision meshes – CPU only)
+    // Generis texture asset to fix broken texture assets
     // -------------------------------------------------------------------------
-    CollisionMesh CavePlatform2_1_Collision = LoadCollisionMesh("media/cave/CavePlatform2/CavePlatform2_1_COL.obj");
-    CollisionMesh CavePlatform2_2_Collision = LoadCollisionMesh("media/cave/CavePlatform2/CavePlatform2_2_COL.obj");
-    CollisionMesh CavePlatform2_3_Collision = LoadCollisionMesh("media/cave/CavePlatform2/CavePlatform2_3_COL.obj");
-    CollisionMesh CavePlatform2_4_Collision = LoadCollisionMesh("media/cave/CavePlatform2/CavePlatform2_4_COL.obj");
-
     Model GenericTexture("media/Ruins/generic.obj");
 
     // -------------------------------------------------------------------------
@@ -929,6 +963,10 @@ int main()
 	CollisionMesh CavePillar_Collision = LoadCollisionMesh("media/Ruins/Pillar_egyptian/obj/objPillar_COL.obj");
 
 	Model R2D2("media/Statues/Low_Poly_R2D2.obj");
+
+    Model Holocron("media/Statues/Holocron/Sith Holocron.FBX");
+
+    Model Coin("media/Statues/Coin/coin_obj.obj");
 
 
     // -------------------------------------------------------------------------
@@ -956,17 +994,17 @@ int main()
     // -------------------------------------------------------------------------
     // WIN CONDITION SETUP (temporary test)
     // -------------------------------------------------------------------------
-    const InstanceTransform& artefactTransform = r2d2Positions[0];
+    const Collectable& artefactTransform = holocronPositions[0]; 
     const float TRIGGER_RADIUS = 10.0f;
 
     // -------------------------------------------------------------------------
     // R2D2 / Artefact 3D audio
     // -------------------------------------------------------------------------
-    vec3 r2WorldPos = artefactTransform.position + LEVEL_OFFSET;
+    vec3 relicWorldPos = artefactTransform.transform.position + LEVEL_OFFSET;
 
     artefactHum = soundEngine->play3D(
-        "media/Audio/cd-player-mechanics.wav",
-        vec3df(r2WorldPos.x, r2WorldPos.y, r2WorldPos.z),
+        "media/Audio/whispering.wav",
+        vec3df(relicWorldPos.x, relicWorldPos.y, relicWorldPos.z),
         true,    // loop
         false,   // start immediately
         true     // track sound
@@ -1000,20 +1038,7 @@ int main()
     projection = perspective(radians(45.0f), (float)windowWidth / (float)windowHeight, 0.1f, 700.0f);
 
 
-    {
-        const InstanceTransform& testInstance = caveWall2_CPositions[0];
 
-        std::vector<glm::vec3> worldVerts = TransformCollisionVertices(CaveWall2_C_Collision, testInstance, LEVEL_OFFSET);
-
-        std::cout << "[COLLISION DEBUG] First 5 world vertices:\n";
-        for (int i = 0; i < 5 && i < worldVerts.size(); ++i)
-        {
-            std::cout << "  "
-                << worldVerts[i].x << ", "
-                << worldVerts[i].y << ", "
-                << worldVerts[i].z << "\n";
-        }
-    }
     // -------------------------------------------------------------------------
     // RENDER LOOP
     // -----------------------------------------------------------------------------
@@ -1030,7 +1055,7 @@ int main()
         // ---------------------------------------------------------------------
         // WIN CONDITION CHECK
         // ---------------------------------------------------------------------
-        if (CheckWinCondition(playerPosition, artefactTransform, TRIGGER_RADIUS))
+        if (CheckWinCondition(playerPosition, artefactTransform.transform, TRIGGER_RADIUS))
         {
             std::cout << "\n=================================\n";
             std::cout << " YOU FOUND THE ARTEFACT!\n";
@@ -1039,6 +1064,24 @@ int main()
 
             glfwSetWindowShouldClose(window, true);
         }
+
+        const float COLLECTABLE_RADIUS = 6.0f;
+
+        for (auto& c : coinPositions)
+        {
+            if (CheckCollectableTrigger(playerPosition, c, COLLECTABLE_RADIUS))
+            {
+                c.collected = true;
+                COLLECTABLES_FOUND++;
+                coinCollectSound = soundEngine->play2D("media/Audio/coins.wav", false);
+                std::cout << "[COLLECTABLE] Found "
+                    << COLLECTABLES_FOUND
+                    << " / "
+                    << TOTAL_COLLECTABLES
+                    << std::endl;
+            }
+        }
+
 
         // ---------------------------------------------------------------------
         // PLAYER PHYSICS (TERRAIN ONLY)
@@ -1217,6 +1260,37 @@ int main()
 
 		// R2D2
 		DrawInstances(Shaders, R2D2, r2d2Positions, LEVEL_OFFSET);
+
+        //DrawInstances(Shaders, Holocron, holocronPositions, LEVEL_OFFSET);
+
+        for (const auto& c : holocronPositions)
+        {
+            float spinAngle = c.transform.rotationY + (currentFrame * -50.0f);
+            model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET);
+            model = translate(model, c.transform.position);
+            model = rotate(model, radians(spinAngle), vec3(0, 1, 0));
+            model = scale(model, c.transform.scale);
+
+            SetMatrices(Shaders);
+            Holocron.Draw(Shaders);
+        }
+
+        for (const auto& c : coinPositions)
+        {
+            if (c.collected)
+                continue;
+
+			float spinAngle = c.transform.rotationY + (currentFrame * 100.0f);
+            model = mat4(1.0f);
+            model = translate(model, LEVEL_OFFSET);
+            model = translate(model, c.transform.position);
+            model = rotate(model, radians(spinAngle), vec3(0, 1, 0));
+            model = scale(model, c.transform.scale);
+
+            SetMatrices(Shaders);
+            Coin.Draw(Shaders);
+        }
 
 
         // Swap buffers & poll events
