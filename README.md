@@ -8,9 +8,7 @@
 ## Submission Links (Required)
 
 - **Public GitHub Repository:** [GITHUB LINK](https://github.com/gingeapple182/COMP3016-CW2)  
-- **Unlisted YouTube Walkthrough Video:** `PASTE_UNLISTED_YOUTUBE_LINK_HERE`  
-  - *Must include gameplay + verbal walkthrough of the report (not code).*
-  - *Must include your face on camera (per submission checklist).*
+- **Unlisted YouTube Walkthrough Video:**https://youtu.be/4_E4yXxabmk 
 
 - **Features Checklist Document:** *Included in submission as:* `features_checklist.pdf` *(or .md/.docx)*  
 - **AI Declaration Document:** *Included in submission as:* `ai_declaration.pdf` *(or .md/.docx)*  
