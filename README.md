@@ -58,47 +58,128 @@ The game is completed when the player reaches close proximity to the *Sith* arte
 
 ---
 
-## Feature Checklist (Assessment Mapping)
+## Feature Checklist
 
-> *This section exists to make marking easy: each bullet should map to a visible feature and a code area.*
+This checklist maps implemented features directly to visible behaviour in the prototype and relevant areas of the codebase, making assessment straightforward.
+- **Procedural terrain generation**  
+  Runtime generation of a grid-based terrain mesh with a bowl-shaped height function and Perlin noise variation.  
+  *(terrain generation functions + FastNoiseLite integration)*
+- **First-person camera system**  
+  Mouse-controlled yaw and pitch with a `lookAt` view matrix.  
+  *(camera vectors, mouse callback, view matrix construction)*
+- **Velocity-based player movement**  
+  Horizontal movement calculated via velocity each frame, integrated using delta time.  
+  *(input handling + velocity integration)*
+- **Gravity simulation**  
+  Constant downward acceleration applied to vertical velocity.  
+  *(playerVelocity.y gravity integration)*
+- **Terrain collision (floor)**  
+  Terrain height sampling prevents the player falling below the surface.  
+  *(GetTerrainHeightFromInstance + vertical clamping)*
+- **Minimum cave floor constraint**  
+  Global minimum height prevents infinite falling inside the cave interior.  
+  *(PLAYER_MIN_HEIGHT safety constraint)*
+- **CPU-side wall collision**  
+  Simplified collision meshes tested on the CPU using circle-vs-triangle checks in the XZ plane.  
+  *(LoadCollisionMesh + CheckWallCollision)*
+- **Axis-separated collision resolution**  
+  Independent X and Z axis testing allows sliding along walls.  
+  *(axis-separated movement tests)*
+- **External model loading**  
+  OBJ and FBX assets loaded at runtime using ASSIMP.  
+  *(LearnOpenGL Model abstraction)*
+- **Instance-based rendering**  
+  Repeated assets rendered using shared models and per-instance transform data.  
+  *(DrawInstances + InstanceTransform)*
+- **Collectable system**  
+  Optional collectable coins with proximity triggers, state tracking, audio feedback, and visual removal.  
+  *(CheckCollectableTrigger + collected flag)*
+- **Win condition trigger**  
+  Proximity-based detection of artefact interaction, printing win message and closing the application.  
+  *(CheckWinCondition)*
+- **Audio system (2D + 3D)**  
+  2D audio for UI-style feedback and music, 3D positional audio for artefact guidance.  
+  *(irrKlang integration)*
+- **Dynamic music zones**  
+  Background music switches when entering or exiting the cave region.  
+  *(distance-based cave trigger)*
+- **Debug toggles**  
+  Gravity and collision systems can be enabled or disabled for testing.  
+  *(ENABLE_GRAVITY / ENABLE_COLLISIONS)*
 
-- **Procedural terrain generation** *(terrain.cpp – mesh generation, bowl function, Perlin noise)*  
-- **First-person camera** *(mouse yaw/pitch, lookAt view matrix)*  
-- **Player movement using velocity** *(ProcessUserInput + per-frame velocity integration)*  
-- **Gravity + terrain collision** *(playerVelocity.y integration + height sampling)*  
-- **Minimum cave floor constraint** *(PLAYER_MIN_HEIGHT to prevent falling through gaps)*  
-- **CPU-side wall collision using collision meshes** *(LoadCollisionMesh + CheckWallCollision)*  
-- **Collectable coins** *(trigger radius, counter increment, hide/remove render)*  
-- **Win trigger (artefact)** *(CheckWinCondition)*  
-- **External model loading** *(ASSIMP via LearnOpenGL Model)*  
-- **Shader pipeline rendering** *(vertex/fragment + terrain shaders)*  
-- **Audio: 2D + 3D positional** *(irrKlang – coin sound + artefact hum)*  
-- **Dynamic music zones** *(cave enter/exit triggers switching tracks)*  
 
 ---
 
 ## Technical Architecture Overview
 
-### Technologies and Libraries
+The prototype is structured as a single C++ application built directly on top of OpenGL and supporting libraries. Rather than relying on an engine framework, all core systems are implemented explicitly to maintain clarity and control.  
 
-*List dependencies and explain what they are used for (1–2 lines each).*
+### Core Technologies and Libraries
 
-- **OpenGL 4.x** – GPU rendering API used for real-time rendering  
-- **GLFW** – window creation, context setup, keyboard/mouse input  
-- **GLAD** – loads OpenGL function pointers  
-- **GLM** – matrix/vector maths for transforms and camera  
-- **ASSIMP** – imports external model formats (OBJ/FBX)  
-- **LearnOpenGL (Shader/Model helpers)** – simplifies shader compilation and model drawing  
-- **irrKlang** – audio playback (2D sounds and 3D positional audio)  
-- **FastNoiseLite** – Perlin noise used for sand variation in terrain generation  
+- **OpenGL 4.x**  
+  Used for all real-time rendering, including terrain meshes, imported models, and shader execution.
+- **GLFW**  
+  Handles window creation, OpenGL context setup, keyboard input, mouse input, and the main application loop.
+- **GLAD**  
+  Loads OpenGL function pointers required for modern OpenGL usage.
+- **GLM**  
+  Provides vector and matrix mathematics for camera transforms, object transforms, and spatial calculations.
+- **ASSIMP**  
+  Imports external 3D models (OBJ and FBX) at runtime, including mesh and material data.
+- **LearnOpenGL Helpers**  
+  Used for shader compilation and model abstraction to simplify OpenGL boilerplate while keeping control explicit.
+- **irrKlang**  
+  Provides audio playback for both 2D sounds and 3D positional audio.
+- **FastNoiseLite**  
+  Generates Perlin noise used to add natural variation to the procedural terrain.  
 
-### Build and Runtime Requirements
 
-*Explain what’s needed to run the `.exe` and what files must be present.*
-- *Windows requirements (if applicable).*
-- *DLL dependencies (GLFW/irrKlang etc.).*
-- *Folder structure assumptions (e.g., `media/`, `shaders/`).*
-- *State clearly: “The executable is not reliant on Visual Studio.”*
+### High-Level System Structure
+
+The application follows a traditional real-time loop:
+1. Input handling  
+2. Physics and movement updates  
+3. Collision checks and constraint enforcement  
+4. Audio trigger updates  
+5. Rendering  
+
+Each system operates independently but shares common spatial data (player position, instance transforms), ensuring predictable behaviour and minimal hidden coupling.  
+
+
+## Build and Runtime Requirements
+
+### Build Requirements
+
+- **Platform:** Windows  
+- **Compiler:** Visual Studio 2022  
+- **Graphics API:** OpenGL 4.x compatible GPU and drivers  
+The project is built as a standard C++ OpenGL application. All third-party libraries are linked at build time, and the executable does not require Visual Studio to be installed to run.  
+
+### Runtime Requirements
+
+To run the compiled executable, the following must be present:
+- A Windows system with OpenGL 4.x support  
+- Required runtime DLLs (assimp-vc143-mtd.dll, irrKlang.dll) located alongside the executable
+- Required dependencies in the Public folder:
+  - `users/Public/OpenGL/include/GLAD` - glad.h
+  - `users/Public/OpenGL/include/GLFW` - glfw3.h, glfw3native.h
+  - `users/Public/OpenGL/include/GLM` - ext/vector_float3.hpp, gtc/type_ptr.hpp
+  - `users/Public/OpenGL/learnOpenGL` - mesh.h, model.h, shader.h, shader_m.h
+  - `users/Public/OpenGL/lib` - glfw3.dll, glfw3.lib, glfw3_mt.lib, glfw3dll.lib
+- Correct project folder structure, including:
+  - `media/` – models, textures, and audio files  
+  - `shaders/` – vertex and fragment shader files  
+
+The executable loads assets at runtime using relative paths, so maintaining the expected folder structure is essential. This solutions **was** tested on University lab computers and does build and run successfully.
+
+### Execution Notes
+
+- The application can be launched directly via the `.exe`.  
+- No external tools or IDEs are required at runtime.  
+- Audio is optional; if audio initialisation fails, the prototype continues to run without sound.
+
+This setup ensures the prototype is portable, self-contained, and suitable for assessment and demonstration purposes.
+
 
 ---
 
@@ -977,61 +1058,146 @@ Blender scene layout
 
 ---
 
-## Use of AI
+## Use of AI  
 
-Write this as a transparent declaration with conrete examples  
-- What AI helped with (e.g., explaining approaches, debugging ideas, planning).
-- What AI did NOT do (e.g., did not produce final submitted code wholesale).
-- Examples (be specific):
-  - Discussed collision approach options (circle vs AABB vs ray tests).
-  - Helped describe gravity + terrain collision in report form.
-  - Helped plan structure of the README/report.
+AI tools were used during the development of this prototype as a **supportive aid** rather than as an automated solution. Their role was limited to assisting with understanding approaches, exploring alternative implementations, and helping structure written explanations. All final design decisions, implementations, and submitted code were written, tested, and validated by me.
+
+### How AI Was Used
+
+AI was primarily used throughout the project, acting as a helpful tool, particularly when working with unfamiliar OpenGL concepts. At the start of most discussions, I provided the coursework brief, my original project proposal, and relevant sections of my existing codebase. This allowed discussions to remain grounded in the actual requirements and current implementation rather than abstract examples, while keeping it consistent with the brief and expected outcomes.
+
+AI assistance included:
+- Discussing different technical approaches (e.g. collision handling strategies, terrain height sampling methods).
+- Explaining OpenGL concepts to help me understand why certain approaches work.
+- Helping plan the structure and wording of report sections after systems were already implemented.
+- Suggesting possible solutions which I then evaluated and adapted.
+- Bug-fixing and testing.
+
+In cases where AI produced code, this was often used as a starting point, as often the AI would generate functional, but not precise code that I would need to edit and adjust to fit the needs of my prototype. Any generated code was carefully scrutinised, tested in isolation, and modified or rewritten to align with my intended behaviour and architectural decisions.
+
+### Validation and Authorial Control
+
+All code used in the final submission was:
+- reviewed line-by-line by me,
+- tested within the prototype,
+- adjusted or rewritten where behaviour was inefficient, incorrect, or unclear.
+
+AI-generated output was **never copied blindly** into the project, I would often ask for extre explanations or reasoning for given code before implementing it into my project. In many cases, AI suggestions were rejected entirely after testing or analysis revealed logical errors, inefficiencies, or incorrect assumptions about my codebase.
+
+### Limitations Encountered
+
+While AI proved helpful at times, it was also frequently difficult to use effectively. Common issues included:
+- Misunderstanding specific requirements or constraints I had already defined.
+- Generating inefficient or incorrect code for the task at hand.
+- Losing context across longer discussions, leading to contradictory or unusable suggestions.
+- Often refusing to change methods resulting in frustrating *arguments*.
+- Struggling with debugging complex issues; if a problem could not be resolved quickly, AI responses often became increasingly inaccurate or unhelpful.
+
+In several instances, this led to frustration and wasted time, requiring me to step back and resolve issues independently.
+
+### Overall Reflection
+
+Overall, AI was a useful learning and planning tool, particularly when exploring unfamiliar OpenGL concepts and structuring written explanations. However, it proved unreliable as a direct coding solution and could not be depended upon to produce correct or context-aware implementations consistently.  
+This experience reinforced the importance of:
+- Understanding systems deeply rather than relying on generated output,
+- Validating all suggested solutions through testing,
+- Maintaining full ownership of design and implementation decisions.
+
+AI supported my learning process but did not replace it, and the final prototype reflects my own understanding, decisions, and implementation work.
+
+Here are some screenshots of messages i sent out or received from AI:  
+Initial chat message:
+<img width="652" height="781" alt="image" src="https://github.com/user-attachments/assets/28192b7b-ad5e-48c1-bdab-d415c918a66a" />
+<img width="664" height="789" alt="image" src="https://github.com/user-attachments/assets/fa0bff21-f853-4384-b1ef-9340006568fa" />
+Asking AI to generate repetitive code for me to hasten development:
+<img width="654" height="804" alt="image" src="https://github.com/user-attachments/assets/c9dc3c79-4fe3-4d81-8a9e-339b4c5dd5c3" />
+<img width="666" height="600" alt="image" src="https://github.com/user-attachments/assets/ce652472-0127-453d-bc9e-b84994a92790" />
+Asking for guidance on how to use Blender:
+<img width="657" height="781" alt="image" src="https://github.com/user-attachments/assets/da7f19ee-ff64-4eed-9a00-6eef17828515" />
+Start of discussion about collectables trigger system:
+<img width="483" height="221" alt="image" src="https://github.com/user-attachments/assets/20637a40-171d-4cb6-8ea8-e834bda98cb8" />
+Me getting frustrated with AI for it not seeming to listen to my requests, so I ask it for clarification and explanation instead of Code that was inefficient:
+<img width="667" height="595" alt="image" src="https://github.com/user-attachments/assets/8403eeea-9025-4005-b15b-50e7c4e63763" />
+More frustration in setting up terrain collision:
+<img width="682" height="462" alt="image" src="https://github.com/user-attachments/assets/d6a5f498-4fb9-4787-a309-991161cc7e22" />
+AI assisting with use of VS2022:
+<img width="663" height="785" alt="image" src="https://github.com/user-attachments/assets/0860b48d-d6b3-4989-832d-f65e45cf4306" />
+
+
+
 
 ---
 
 ## Evaluation
 
 ### What I Achieved
-Summarise your outcomes relative to the proposal.
-- Exploration prototype complete
-- Terrain generation implemented
-- Model loading and instancing
-- Collision and physics working
-- Audio system implemented
+
+The primary goal of this coursework was to create an interactive OpenGL prototype demonstrating real-time rendering, movement, interaction, and atmosphere. This was successfully achieved through the development of a first-person exploration experience set within a procedurally generated desert and cave environment.  
+
+Relative to my original proposal, the final prototype includes:
+- A fully procedural terrain system used to shape and guide player exploration,
+- First-person camera control with mouse-based yaw and pitch,
+- Velocity-based player movement with gravity and collision handling,
+- Runtime loading and instancing of external 3D assets,
+- A custom CPU-side collision system using simplified meshes,
+- Interactive collectables and a clear win condition,
+- An integrated audio system featuring both 2D and 3D positional sound.
+
+The project meets the core technical requirements of the COMP3016 brief while demonstrating a cohesive and playable prototype that integrates multiple graphics programming concepts.  
+
 
 ### What Worked Well
 
-Reflect on strengths and why they’re good.
-- Stable movement and collision
-- Terrain shaping guides player
-- Audio improves atmosphere
+One of the strongest aspects of the prototype is the **stability of player movement and collision handling**. By using velocity-based movement with predictive collision checks, the player experience remains smooth and responsive even when navigating uneven procedural terrain or complex cave geometry.  
+
+The **procedural terrain system** worked particularly well as both a technical feature and a design tool. The bowl-shaped height function naturally guides the player towards the cave without requiring explicit UI direction, demonstrating how procedural generation can support gameplay flow as well as natural looking visual variety.  
+
+The **audio system** enhanced immersion. Dynamic music switching when entering and exiting the cave, combined with 3D positional audio emitted by the *Sith holocron*, provided subtle but effective guidance. This reinforced exploration and discovery without relying on HUD elements or markers.  
+
+Finally, using **Blender as an external layout tool** proved highly effective. This allowed complex environments to be composed visually and transferred into the codebase accurately, improving consistency between visual assets and collision geometry while speeding up iteration.  
+
+AI proved to be a very useful tool in creating this prototype, however after spending time using it, it has made me re-evaluate my trust of AI-generated content, as it worked much better in areas I already had good understanding, since i could then analyse and critique the generated code for better suitability. It is an excellent learning tool but shouold never be relied upon.  
+
 
 ### Limitations
 
-Be honest but framed professionally.
-- No dynamic lighting (if not implemented)
-- Simplified collision (XZ-only, no true triangle sweep)
-- No UI for collectables (console output only)
+Despite the successful implementation, several limitations remain due to time and scope constraints.
+
+The prototype does not include a **dynamic lighting system**. All rendering is unlit, relying on textures and vertex colour alone. While this maintains visual clarity, it limits depth, mood variation, and realism, particularly within the cave interior as i had hoped to have dark and moody lighting in the cave, except for a red pulsing glow emmitted from the *Sith holocron*.  
+
+Collision handling is intentionally simplified. Wall collision operates in the XZ plane only, without full swept volume or push-out resolution. While this provides stable behaviour, it is not physically accurate and would not scale well to more complex interactions.  
+
+User feedback is also limited. Collectable progress is reported only via console output, and there is no on-screen UI or HUD. While acceptable for a prototype, this reduces accessibility and player awareness.  
+
 
 ### Future Improvements
 
-Show you understand what’s next.
-- Mesh-based floor collision inside cave
-- Better collision response (push-out vectors)
-- UI HUD for collectables
-- Lighting system (directional light, fog, tone)
+Given additional development time, several clear improvements could be made.
+
+A priority improvement would be implementing **mesh-based floor collision** inside the cave to replace the global minimum height constraint, allowing more precise interaction with interior geometry.
+
+Collision response could be improved by introducing **vector-based push-out resolution**, enabling smoother interaction with complex shapes and corners.
+
+A simple **UI or HUD system** could be added to display collectable progress and contextual feedback directly to the player rather than relying on console output.
+
+Finally, introducing a **lighting system**—such as a directional light for the desert and ambient or point lighting within the cave for the holocron, would greatly enhance atmosphere and visual depth while expanding the rendering pipeline.
+
 
 ---
 
 ## Conclusion
 
-Close with a concise paragraph:  
-- What the prototype deomnstrates (OpenGL rendering, progedural geometry, interaction)
-- How it alligns with the COMP3016 goals
-- What i learnt
+This project demonstrates the successful development of a real-time OpenGL exploration prototype built entirely in C++, showcasing core graphics programming principles including procedural geometry generation, shader-based rendering, first-person camera control, collision handling, and audio-driven interaction. Through the creation of a curated desert and cave environment, the prototype integrates rendering, movement, interaction, and atmosphere into a cohesive and playable experience.  
+
+The work aligns strongly with the aims of the COMP3016 module by evidencing an understanding of how modern graphics applications are structured beneath engine-level abstractions. Implementing systems such as terrain generation, collision detection, instancing, and audio integration from first principles reinforced key concepts in real-time rendering pipelines, spatial reasoning, and system-level problem solving.  
+
+From a learning perspective, this project significantly improved my confidence working with OpenGL and C++ in an unmanaged environment. I developed a deeper understanding of how gameplay systems interact with rendering logic, how stability and predictability must be actively designed for, and how tools such as procedural generation and audio can be used to guide player experience without relying on UI. The challenges encountered—particularly around collision handling and terrain interaction—proved valuable in developing robust debugging and design decision skills.  
+
+Overall, *Beneath Ancient Sands* fulfils the objectives set out in the original proposal and provides a solid foundation for further expansion. The project represents both a technical achievement and a meaningful step forward in my understanding of real-time graphics programming.  
 
 
 
+---
 
 
 ## Asset Usage & Licensing
