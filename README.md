@@ -7,8 +7,6 @@
 
 ## Submission Links (Required)
 
-> **Marker note:** These must be obvious and near the top.
-
 - **Public GitHub Repository:** [GITHUB LINK](https://github.com/gingeapple182/COMP3016-CW2)  
 - **Unlisted YouTube Walkthrough Video:** `PASTE_UNLISTED_YOUTUBE_LINK_HERE`  
   - *Must include gameplay + verbal walkthrough of the report (not code).*
