@@ -58,7 +58,7 @@ bool gameWon = false;
 // CAMERA STATE
 // -----------------------------------------------------------------------------
 
-vec3 cameraPosition = vec3(0.0f, 60.0f, 123.0f);
+vec3 cameraPosition = vec3(0.0f, 60.0f, 323.0f);
 vec3 cameraFront = vec3(0.0f, 0.0f, -1.0f);
 vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);
 
@@ -1012,9 +1012,9 @@ int main()
 
     if (artefactHum)
     {
-        artefactHum->setVolume(1.0f);
-        artefactHum->setMinDistance(5.0f);   // full volume near R2
-        artefactHum->setMaxDistance(50.0f);  // fades out naturally
+        artefactHum->setVolume(0.70f);
+        artefactHum->setMinDistance(5.0f);   // full volume near Holocron
+        artefactHum->setMaxDistance(25.0f);  // fades out naturally
     }
 
     Shaders.use();
