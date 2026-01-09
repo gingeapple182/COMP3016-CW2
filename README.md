@@ -1,33 +1,1036 @@
-# COMP3016 CW2 Proposal – Oliver Cole
-## Working title:
-Beneath ancient sands
-## Overview:
-I aim to create an exploration game written in C++ using OpenGL. The game is set in
-an ancient city buried in the desert sands. The player will explore the environment using
-keyboard and mouse, traversing procedurally generated sand terrain and some ruined
-ancient structures to locate a hidden ancient artefact.
-The player will be within a desert environment bounded by the partially submerged
-ruins which guide the player to explore forwards. The primary gameplay objective is to
-locate an ancient artefact within the ruins.
-## Details:
-The environment will consist of a procedurally generated desert terrain representing
-sand dunes, as well as static ruins structured sourced from free assets online. These
-structures will be positioned to look as if submerged by the sands over time, creating an
-abandoned and ancient vibe.
-A main artefact will be the players goal to obtain and will be visually highlighted as
-the objective, possibly by rotating on a pedestal. The atmosphere will be supported
-through use of directional lighting and music, changing when near the artefact for
-suspense and guide progression.
-The project will be developed in C++ using OpenGL techniques. It will demonstrate realtime rendering, keyboard/mouse interaction, procedural content generation and
-loading/rendering of external 3D models.
-## Libraries and Tools:
-- GLAD OpenGl loading
-- GLFW Window creationg and input handling
-- ASSIMP Loading external 3D models
-- Irrklang Audio
-## Advanced:
-The project aims to include advanced features such as dynamic lighting and the use of
-audio to enhance atmosphere and immersion.
+# COMP3016 Coursework 2 – OpenGL Prototype  
+**Student:** Oliver Cole  
+**Module:** COMP3016 – Graphics Programming  
+**Working Title:** Beneath Ancient Sands  
+
+---
+
+## Submission Links (Required)
+
+> **Marker note:** These must be obvious and near the top.
+
+- **Public GitHub Repository:** [GITHUB LINK](https://github.com/gingeapple182/COMP3016-CW2)  
+- **Unlisted YouTube Walkthrough Video:** `PASTE_UNLISTED_YOUTUBE_LINK_HERE`  
+  - *Must include gameplay + verbal walkthrough of the report (not code).*
+  - *Must include your face on camera (per submission checklist).*
+
+- **Features Checklist Document:** *Included in submission as:* `features_checklist.pdf` *(or .md/.docx)*  
+- **AI Declaration Document:** *Included in submission as:* `ai_declaration.pdf` *(or .md/.docx)*  
+- **Link Note File:** *Included in submission as:* `links.txt` *(GitHub + YouTube repeated)*
+
+---
+
+## Project Overview
+
+### Concept Summary
+
+This project is a first-person exploration prototype developed in C++ using OpenGL 4.x. The game is set within an ancient desert landscape, where the player explores a procedurally generated environment consisting of sand dunes, partially buried ruins, and a hidden cursted cave. The primary focus of the prototype is to show real-time rendering, player movement, environmental interaction, and atmosphere through audio and spatial design.  
+The player navigates the environment using standard keyboard and mouse controls, moving from the open desert into a cave embedded within the terrain. As the player progresses, environmental cues such as terrain shape, asset placement, and audio changes guide exploration. The central objective is to locate an ancient Sith artefact hidden within the cave. Adittionaly, collectable coins are placed throughout the world to encourage exploration beyond the main path, these are a secondary objective and are not essential to *complete* the prototype. The prototype relies on environmental design and positional audio to direct the player.
+
+### Proposal Alignment
+
+The final prototype closely aligns with the original project proposal. The core concept of an ancient desert exploration experience built using OpenGL has been fully realised, including procedurally generated sand terrain, static ruins partially submerged by the environment, and a cave area that houses the main objective. External 3D models are loaded at runtime, and the player is able to freely explore the environment using real-time keyboard and mouse input as originally intended.  
+Several elements described in the proposal were implemented with slight adjustments to scope. While advanced features such as dynamic lighting were initially considered, development instead prioritised robust terrain generation, collision handling, and audio-driven atmosphere to ensure a stable and polished prototype within the available timeframe. The use of audio to support immersion, particularly through dynamic background music and 3D positional sound near the artefact, directly reflects the proposal’s emphasis on atmosphere and player guidance. Overall, the project meets the original aims while making pragmatic design decisions to balance technical complexity and reliability.  
+
+---
+
+## Gameplay Description
+
+### Core Player Experience
+
+The prototype presents a first-person exploration experience set within an ancient desert environment. The player begins outside in the desert environment, navigating procedurally generated sand dunes towards partially buried ruins using standard keyboard and mouse controls.  
+As the player explores the desert, they will enter a cave partially buried in desert sand. Upon entering this area, the atmosphere shifts through changing background audio, whilst also hearing muffled whispers coming from deeper in the cave, reinforcing a sense of discovery and mystery. Within the cave, there are coins scattered, encouraging exploration beyond the critical path. These collectables provide audio feedback when collected but are not required to complete the game.  
+The primary objective is to locate the ancient *Sith* artefact hidden within the cave. The artefact is floating middair and emits positional audio, subtly guiding the player toward the goal without explicit UI indicators.
+
+### Win Condition
+
+The game is completed when the player reaches close proximity to the *Sith* artefact. A trigger-based check detects when the player enters the artefact’s interaction radius, at which point a win message is printed to the console confirming successful completion. Following this feedback, the application terminates cleanly, signalling the end of the prototype experience.  
+
+---
+
+## Controls
+
+*List controls clearly and briefly.*
+
+- **W / A / S / D** – Move  
+- **Mouse** – Look   
+- **ESC** – Quit  
+
+---
+
+## Feature Checklist (Assessment Mapping)
+
+> *This section exists to make marking easy: each bullet should map to a visible feature and a code area.*
+
+- **Procedural terrain generation** *(terrain.cpp – mesh generation, bowl function, Perlin noise)*  
+- **First-person camera** *(mouse yaw/pitch, lookAt view matrix)*  
+- **Player movement using velocity** *(ProcessUserInput + per-frame velocity integration)*  
+- **Gravity + terrain collision** *(playerVelocity.y integration + height sampling)*  
+- **Minimum cave floor constraint** *(PLAYER_MIN_HEIGHT to prevent falling through gaps)*  
+- **CPU-side wall collision using collision meshes** *(LoadCollisionMesh + CheckWallCollision)*  
+- **Collectable coins** *(trigger radius, counter increment, hide/remove render)*  
+- **Win trigger (artefact)** *(CheckWinCondition)*  
+- **External model loading** *(ASSIMP via LearnOpenGL Model)*  
+- **Shader pipeline rendering** *(vertex/fragment + terrain shaders)*  
+- **Audio: 2D + 3D positional** *(irrKlang – coin sound + artefact hum)*  
+- **Dynamic music zones** *(cave enter/exit triggers switching tracks)*  
+
+---
+
+## Technical Architecture Overview
+
+### Technologies and Libraries
+
+*List dependencies and explain what they are used for (1–2 lines each).*
+
+- **OpenGL 4.x** – GPU rendering API used for real-time rendering  
+- **GLFW** – window creation, context setup, keyboard/mouse input  
+- **GLAD** – loads OpenGL function pointers  
+- **GLM** – matrix/vector maths for transforms and camera  
+- **ASSIMP** – imports external model formats (OBJ/FBX)  
+- **LearnOpenGL (Shader/Model helpers)** – simplifies shader compilation and model drawing  
+- **irrKlang** – audio playback (2D sounds and 3D positional audio)  
+- **FastNoiseLite** – Perlin noise used for sand variation in terrain generation  
+
+### Build and Runtime Requirements
+
+*Explain what’s needed to run the `.exe` and what files must be present.*
+- *Windows requirements (if applicable).*
+- *DLL dependencies (GLFW/irrKlang etc.).*
+- *Folder structure assumptions (e.g., `media/`, `shaders/`).*
+- *State clearly: “The executable is not reliant on Visual Studio.”*
+
+---
+
+## Rendering Pipeline
+
+### Rendering Flow
+
+Rendering is handled within a single render loop within main(), which separates update logic (input, audio, physics, collision) from visual rendering. Each frame is is organised to properly handle depth, camera behaviour and shader use.  
+At the start of the frame, the colour and depth buffers are reset before drawing any new geometry. Depth testing is enabled for correct occlusion based on distance.  
+```cpp
+glClearColor(0.25f, 0.0f, 1.0f, 1.0f);
+glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+glEnable(GL_CULL_FACE);
+```
+The camera is then constructed using the players current position and orientation. The camera is configured with yaw and pitch controlled by the mouse.
+```cpp
+view = lookAt(cameraPosition, cameraPosition + cameraFront, cameraUp);
+```
+Terrain is then rendered to create a specific bowl shape, with procedurally generated noise and using vertex colour data rather than textures to ensure consistent and high quality visuals.
+```cpp
+terrainShaders.use();
+model = mat4(1.0f);
+model = translate(model, vec3(-terrainBowl.center.x, 0.0f, -terrainBowl.center.y));
+SetMatrices(terrainShaders);
+DrawTerrain(terrainBowl);
+```
+Following terrain, we then render the primary shader for imported 3D models. This includes cave walls, pillars and other decorative props, with both $$.obj$$ and $$.fbx$$ model types. These models are rendered using a custom draw function that applies translation, rotation, and scale per instance.
+```cpp
+Shaders.use();
+DrawInstances(Shaders, CaveWall1_B, caveWall1_BPositions, LEVEL_OFFSET);
+DrawInstances(Shaders, CavePillar, cavePillarPositions, LEVEL_OFFSET);
+
+//Further expansion of DrawInstances()
+void DrawInstances(Shader& shader, Model& modelAsset, const std::vector<InstanceTransform>& instances, const glm::vec3& levelOffset) {
+    for (const auto& inst : instances)
+    {
+        model = mat4(1.0f);
+        model = translate(model, levelOffset);
+        model = translate(model, inst.position);
+        model = rotate(model, radians(inst.rotationY), vec3(0, 1, 0));
+        model = scale(model, inst.scale);
+
+        SetMatrices(shader);
+        modelAsset.Draw(shader);
+    }
+}
+```
+Finally, we render the dynamic, interactable objects: Sith holocron and coins. These models are rendered seperately as they have a simple rotation animation applied to them. The coins also have multiple instances, and will be disabled from their positional vector once collected so they have a separate, unique render function.
+```cpp
+if (!c.collected)
+{
+    float spinAngle = currentFrame * 100.0f;
+    model = translate(mat4(1.0f), LEVEL_OFFSET + c.transform.position);
+    model = rotate(model, radians(spinAngle), vec3(0, 1, 0));
+    SetMatrices(Shaders);
+    Coin.Draw(Shaders);
+}
+```
+Rendering in this order allows for predictable behavior, layering each type of rendered instance ontop in a suitable manner building from the largest to the smallest objects.  
+
+### Shader Responsibilities
+
+My prototype uses two shader programs, each made specifically to handle rendering for models and the terrain.  
+The texture model shader ($$vertexShader.ver$$ and $$fragmentShader.frag$$) is used for all of the imported 3D models. The vertext shader applies the Model-View-Projection transformations to vertex poitions and pushes texture coordinates to the fragment shader.
+```cpp
+gl_Position = mvpIn * vec4(position, 1.0);
+textureFrag = textureVertex;
+```
+The fragment shader samples the diffuse texture and outputs the colour. Lighting is not calculated.
+```cpp
+FragColor = texture(texture_diffuse1, textureFrag);
+```
+  
+For the terrain we use $$terrain.vert$$ and $$terrain.frag$$. Instead of rendering textures, we use per-vertex colour data generated during the construction of the mesh. The vertex shader then passes this colour information to the fragment shader after applying the transformations.
+```cpp
+gl_Position = mvpIn * vec4(position, 1.0);
+colourFrag = colourVertex;
+```
+The fragment shader then outputs the colour data as the fragment value, allowing for height variations to be communicated visually on the rendered terrain noise.
+```cpp
+FragColor = vec4(colourFrag, 1.0);
+```
+Separating the model and terrain allows focussed roles. Imported assets have standard texture rendering while the terrain gets data-driven colouring. This also allows me to be able to expand this in the future to add normal or specular maps to the models, or more detailed colour variations in the terrain.  
+
+---
+
+## Procedural Terrain System
+
+### Terrain Mesh Generation
+
+Terrain is generated procedurally at runtime instead of being loaded from a predefined heightmap or mesh. This is done by creating a grid-based mesh with each vertex representing a point on the surface of the terrain. The resolution of the mesh is controlled by `#define TERRAIN_RENDER_DIST 256`, `#define TERRAIN_MAP_SIZE (TERRAIN_RENDER_DIST * TERRAIN_RENDER_DIST)` and `constexpr float TERRAIN_SPACING = 1.0f;` allowing the terrain to be easily adjusted.
+Each vertex has six floating-point values for each vertex; three for position and three for colour. This allows visual variation to be embadded directly into the terrain without having to load textures.
+```cpp
+std::vector<GLfloat> vertices(mapSize * 6);
+```
+Vertices are created in a loop that increments across the X and Z axes producing a grid. Indicies are then used to form two triangles per grid space, enabling the terrain to be rendered efficiently.
+```cpp
+indices[idx++] = topLeft;
+indices[idx++] = bottomLeft;
+indices[idx++] = topRight;
+
+indices[idx++] = topRight;
+indices[idx++] = bottomLeft;
+indices[idx++] = bottomRight;
+```
+The generated terrain data is then uploaded to the GPU and rendered using `glDrawElements()`, ensuring the terrain is handled efficiently despite being large.  
+
+### Height Function (Bowl Shape)
+
+Instead of relying fully on the noise-based terrain, i chose to calculate the height of each vertex using a bowl-shape. This created a large depression in the terrain, guiding the player down towards the central cave area without any explicit markers or reliance on UI.
+The height calculation is based on the distance from the center of the terrain. This distance is normalised and passed through an interpolation function to avoid sharp slopes.
+```cpp
+float distance = glm::length(glm::vec2(xOffset, zOffset) - terrain.center);
+float t = glm::clamp(distance / terrain.bowlRadius, 0.0f, 1.0f);
+float smoothT = t * t * (3.0f - 2.0f * t);
+```
+The values are then used to interpolate their height, this can be used to create a concave bowl or daised dome, i chose to make it act as a bowl to seem as if the cave has been *unearthed*.
+```cpp
+float height = inverted
+    ? glm::mix(terrain.bowlHeight, terrain.bowlDepth, smoothT)
+    : glm::mix(terrain.bowlDepth, terrain.bowlHeight, smoothT);
+```
+Doing this allows me to control natural looking slopes towards the central cave area, naturally guiding the player towards the curated playable area.  
+
+### Noise Layer (Sand Variation)
+
+In order to stop the generated terrain from looking too flat and uninteresting, i applied PErlin noise layered ontop of the base mesh. This allows for small-scale height variation that resemble the natural look of sand dunes.  
+Noise is generated using `FastNoiseLite` with a fixed seed, ensuring the terrain remains consistent across sessions.
+```cpp
+FastNoiseLite noise;
+noise.SetNoiseType(FastNoiseLite::NoiseType_Perlin);
+noise.SetFrequency(0.25f);
+noise.SetSeed(1337);
+```
+The noise is scaled and applied to each vertex, but is intentionally dulled near the center of the terrain to ensure the cave entrance remains smooth to transition into the curated interior.
+```cpp
+float noiseValue = noise.GetNoise(xOffset * 0.2f, zOffset * 0.2f);
+float noiseFalloff = smoothT;
+height += noiseValue * NOISE_STRENGTH * noiseFalloff;
+```
+The noise values are also used to influence the vertex colour, providing subtle but important visual variation across the surface, helping to visualise the peaks and troughs of the sand without requiring texture maps.
+<img width="1283" height="752" alt="image" src="https://github.com/user-attachments/assets/378d9167-c0ab-4832-b75b-c588d993d67b" />  
+
+### Design Rationale
+
+Procedual generation was chosen to make the environment have controlled randomness, much like how a desert isnt uniform and flat. Generating the terrain at runtime demonstrates core procedural generation teqhniques whilst remaining lightweight and modifiable.  
+Using a noise seed ensures the layout is stable between sessions, enabling consistent testing, collision behaviour and visuals. The bowl-shaped height function demonstrates the flexibility of the PCG while alos helping to guide players, reducing the likelihood of players missing the objective.  
+Embedding colour data directly into the terrain vertices allows the terrain to be visually readable despite not introducting texture or lighting complexity. This aligns with the projects focus on procedural generation and stability rather than losing focus on visual fidelity.  
+
+---
+
+## Asset rendering and Placement Workflow
+
+### Imported Model Rendering
+
+All non-terrain geometry in the prototype is rendered using external 3D models loaded at runtime through **ASSIMP**. Models are loaded during initialisation using the `Model` abstraction provided by **LearnOpenGL**, which handles mesh data, materials and texture binding.
+```cpp
+Model CaveWall1_B("media/cave/CaveWalls1/CaveWalls1_B.obj");
+Model CavePillar("media/Ruins/Pillar_egyptian/obj/objPillar.obj");
+Model Holocron("media/Statues/Holocron/Sith Holocron.FBX");
+```
+Each model is rendered using a shared shader and draw function that applies per-instance transformations. This allows the same model to be reused numerous times in the scene with individual positions, rotations and scales, reducing memory usage and increasing efficiency.
+```cpp
+void DrawInstances(Shader& shader, Model& modelAsset, const std::vector<InstanceTransform>& instances, const glm::vec3& levelOffset) {
+    for (const auto& inst : instances)
+    {
+        model = mat4(1.0f);
+        model = translate(model, levelOffset);
+        model = translate(model, inst.position);
+        model = rotate(model, radians(inst.rotationY), vec3(0, 1, 0));
+        model = scale(model, inst.scale);
+
+        SetMatrices(shader);
+        modelAsset.Draw(shader);
+    }
+}
+```
+
+### Instance-Based World Layout
+
+Each model is placed using structured instance data, each object is defined using `InstanceTransform`, which stores position, rotation and scale values.
+```cpp
+struct InstanceTransform
+{
+    vec3 position;
+    float rotationY;
+    vec3 scale;
+};
+```
+Collections of these transforms are stored in vectors per asset type, allowing large groups of models (for example cave walls or stone pillars) to be rendered efficiently using a single model reference.  
+`std::vector<InstanceTransform> cavePillarPositions;`  
+This allows for rapid iteration and ensures visual placement and collision meshes all reference the same spatial data.  
+
+### Blender as a World Layout Tool
+
+Blander was used an an external world-layout tool to organise, scale and position assets visually before transferring their data to the C++ codebase. I created a dedicated Blender scene containing all environment assets arranged into the desired layout. Thsi allowed me to easily and quickly rather than relying on manual nuerical positioning.  
+Using Blender to achieve this had some advantages:
+- Accurate spatial relationships between models
+- Consistent and controllable position, rotation and scaling
+- Easy composition of complex structures
+To streamline the workflow further, a custom python script was used to extract the positional, rotational and scale data in a format suitable to be pasted into my project. The output of the script held the name of the object from blender, the Positional function with correct data, rotation on the Z axis and manually chosen scale.
+```python
+import bpy, math
+
+print("cave walls")
+for obj in bpy.context.selected_objects:
+    l = obj.location
+    r = obj.rotation_euler
+    print(f"// {obj.name}")
+    print("{")
+    print(f"    BlenderToOpenGL({l.x:.2f}f, {l.y:.2f}f, {l.z:.2f}f),")
+    print(f"    {math.degrees(r.z):.2f}f,")
+    print("    vec3(CAVE_SCALE)")
+    print("},\n")
+```
+The exported data could then be pasted directly into the relevant instance vectors within `main.cpp`, allowing for quick and efficient data transfer.  
+
+
+### Coordinate System Alignment
+
+As Blender and OpenGL use different world coordinate systems, a conversion function was implemented to translate Blender positions into OpenGl suitable values, ensuring consistent placement when importing layout data.
+```cpp
+vec3 BlenderToOpenGL(float bx, float by, float bz)
+{
+    return vec3(bx, bz, -by);
+}
+```
+
+
+### Benefits and Design Rationale
+
+Using Blender as a layout and positional data authoring tool significantly improved development efficiency and consistency. Complex environments could be curated and adjusted visually and re-exported without changing models in the solution files. This helped ensure collision meshes and visual models remained spatially alligned.
+Separating layout authoring mirrors industry workflows, where level design and functional systems are developed in parallel. For the scope of this prototype, this provided a practical balance of control and flexibility.  
+<img width="1891" height="880" alt="image" src="https://github.com/user-attachments/assets/8f1d6734-deec-4c18-a81c-0bcd0754393e" />
+
+
+---
+
+## Player Physics and Movement
+
+### Movement Model (Velocity-Based)
+
+Player movement is implemented using velocity rather than directly changing position values. Each frame, player input determines desired horizontal movement, applied to the players velocity vecotr. The velocity is then integrated using *delta time* to predict the players next position.
+Movement is reset and recalculated every frame to ensure responsiveness and avoiding accumulated drift. Vertical movement is handled separately through *gravity*, allowing horizontal traversal to remain consistent regardless of terrain height.
+```cpp
+// Reset horizontal velocity every frame
+playerVelocity.x = 0.0f;
+playerVelocity.z = 0.0f;
+```
+Directional input is calculated relative to the orientation of the camera, ensuring movement matches what the player would expect to happen.
+```cpp
+vec3 forward = normalize(vec3(cameraFront.x, 0.0f, cameraFront.z));
+vec3 right = normalize(cross(forward, cameraUp));
+```
+The player position is not immediately applied, instead, a predicted next position is calculated using the velocity and delta time. This allows collision or floor contraints to be enacted before movement is commited. This allows smooth movement while ensuring collisions and constraints can be handled effectively.  
+```cpp
+vec3 nextPosition = playerPosition + playerVelocity * deltaTime;
+```
+
+### Gravity
+
+Gravity is applied as a constant acceleration to the players vertical velocity, simulating a basic physics model. Each frame gravity modified the Y component of the players velocity.
+```cpp
+const float GRAVITY = -25.0f * WORLD_SCALE;
+playerVelocity.y += GRAVITY * deltaTime;
+```
+The gravity value is relative to the world scale and is tuned to feel appropriate for the set movement speed and terrain. This prevents movement from feeling too sluggish or floaty.  
+For development and testing purposes, gravity can be toggled on or off using the `ENABLE_GRAVITY` bool. This allows free movement during debugging for me to inspect the curated level.  
+
+### Terrain Collision (Floor)
+
+To prevent th eplayer from falling through the sand terrain, terrain height is sampled at the players predicted next position each frame. This makes sure collision is calculated before the player has moved too far, helping immerse the player in the world rather than letting them see behind the curtains.
+```cpp
+float terrainHeight = GetTerrainHeightFromInstance(
+    terrainBowl, nextPosition.x, nextPosition.z);
+```
+A minimum allowed vvertical position is calculated using the terrain height and the players height values. If the player is predicted to fall below this value, the player gets clamped to the terrain and their vertical velocity is reset.
+```cpp
+float minY = terrainHeight + PLAYER_HEIGHT;
+
+if (nextPosition.y < minY)
+{
+    nextPosition.y = minY;
+    playerVelocity.y = 0.0f;
+}
+```
+This ensures the player remains grounded on the procedurally generarted bumpy terrain while still allowing for smooth movement across the dunes.  
+
+### Minimum Height Constraint (Cave Floor Handling)
+
+Inside the cave environment, there is no continuous terrain mesh, the interior flooring is comprised of platform assets with uneven geometry to simulate the rocky interior of a cave. This would add additional issues with gaps and inconsistent movement height, creating an uncomfortable exploration experience, this could also allow the player to fall below some models ruining the immersion.  
+The cave is located at the bottom-most point of the bowl, so to address this issue, I decided to introduce a minimum height constant, `PLAYER_MIN_HEIGHT`. This acts as a safety floor within the cave, preventing the player from falling below the floor.
+```cpp
+float absoluteMinY = PLAYER_MIN_HEIGHT + PLAYER_HEIGHT;
+
+if (nextPosition.y < absoluteMinY)
+{
+    nextPosition.y = absoluteMinY;
+    playerVelocity.y = 0.0f;
+}
+```
+This solution was chosen as a stability measure to ensure consistent traversal while within the cave environment, guaranteeing the player remains within the curated space even where the floor models arent uniformly positioned.  
+A potential future solution would be to introduce another floor mesh, for the interior of the cave, which would create more precise walking interaction, however as this is a prototype, a min_height is suitable.
+
+*Explain your cave safety floor decision (this is a design decision section).*
+- *Inside the cave there isn’t a continuous terrain “floor” mesh.*
+- *Some areas/gaps could allow the player to fall below intended play space.*
+- *A global minimum height (`PLAYER_MIN_HEIGHT`) prevents infinite falling.*
+- *This is a pragmatic stability choice to keep gameplay consistent.*
+- *Future improvement: mesh-based floor collision for cave geometry.*
+
+---
+
+## Collision System
+
+### Collision Mesh Workflow (Blender → CPU)
+
+Collision is handled on the CPU using simplified, low-poly meshes authored separately from the visally rendered models. These collision meshes were create din blender by duplicaiting the models and heavily simplifying them through decimation, then exporting them with a `_COL.obj` suffix. This ensured that the collision mesh matched the visuals.
+collision meshes are never rendered and exist just for collision detection. At runtime, they are loaded through ASSIMP into a `CollisionMesh` struct containing only the vertex and index data.
+```cpp
+struct CollisionMesh
+{
+    std::vector<glm::vec3> vertices;
+    std::vector<unsigned int> indices;
+};
+```
+Each mesh is loaded at startup using a loader function, this function extracts vertex positions and triangle indicies for use in collision checks.
+```cpp
+CollisionMesh LoadCollisionMesh(const std::string& path)
+{
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(
+        path, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
+
+    aiMesh* mesh = scene->mMeshes[0];
+
+    for (unsigned int i = 0; i < mesh->mNumVertices; ++i)
+        result.vertices.emplace_back(mesh->mVertices[i].x,
+                                     mesh->mVertices[i].y,
+                                     mesh->mVertices[i].z);
+}
+```
+Separating the visual and collision geometry avoids unnecessary GPU overhead.  
+
+
+### Wall Collision Method (XZ Circle vs Triangle)
+
+The player is represented as a circle in the XY plane, defined by a set `PLAYER_RADIUS`. This is suitable for the prototype as we dont require a full 3D physics simulation.
+Collision is tested against the triangles of the low-poly `_COL.obj` models projected into the XY plane. For each triangle, the distance between the players position and the edges are calculated. If the distane is smaller than the `PLAYER_RADIUS` then a collision is detected.
+```cpp
+float DistancePointToSegmentXZ(
+    const glm::vec2& p,
+    const glm::vec2& a,
+    const glm::vec2& b)
+
+bool CircleIntersectsTriangleXZ(
+    const glm::vec2& circleCenter,
+    float radius,
+    const glm::vec3& v0,
+    const glm::vec3& v1,
+    const glm::vec3& v2)
+```   
+
+### Transforming Collision Instances
+
+Collision meshes are reused across each instance of the same models. To ensure geometry alligns correctly with the rendered models, each collision mesh is transformed into the world space using the same translation, rotation and scale values as its corresponding rendered model.
+The transformation is perfomed on the CPU by constructing a model matrix and applying it to the vertices of the `_COL.obj`
+```cpp
+glm::mat4 BuildModelMatrix(const InstanceTransform& inst, const glm::vec3& levelOffset)
+
+glm::vec4 worldPos = modelMatrix * glm::vec4(v, 1.0f);
+```   
+
+### Axis-Separated Resolution
+
+Collision resolution is handled using *axis-seoarated movement*, where the horizontal movement is tested independantly along the X and Y axes. After predicting the players next position, each axis is checked against the active collision meshes.
+```cpp
+// X axis test
+vec3 testX(nextPosition.x, playerPosition.y, playerPosition.z);
+// Z axis test
+vec3 testZ(nextPosition.x, playerPosition.y, nextPosition.z);
+```
+If a collision is detected along either axis, movement along the axis is reverted while allowing the other to still be tested and acted upon. This approach allows for *sliding* along the walls stopping them from feeling *sticky*. Axis-separated movement provides stable and predictable collision handling without requiring complex physics processes.  
+
+
+### Design Rationale
+
+A simple custom CPU-based collision system was chosed over PhysX to maintain full control over behaviour and to keep the prototype focussed on OpenGl rendering and spatial logic. This approach maked collision logic transparent and easier to debug, while avoiding the extra learning curve of a full physics framework.
+Using simplified collision meshes and a 2D collision plane allows for a simple but effective system in the prototype. The system is capable of supporting complex collision meshes and repeated asset placement making it suitable for expansion.  
+
+---
+
+## World Interaction and Proximity Triggers
+
+### Interaction Trigger Model
+
+World interaction within the prototype is driven by a proximity-based trigger system. Rather than using individual collison meshes or physics triggers, interactions are detected using distance checks between the players position and the worl-space position on the XZ axes of interactive objects.  
+This system is used across multiple gameplay features, including collectable coins, the win condition (*Sith holocron*) and audio triggers. (expanded upon in the **Audio Design** section.)  This is constructed using the following approach:
+- A fixed world position
+- Defined trigger radius
+- Per-frame distance check
+- State change upon entering radius
+Distance checks are performed on the XZ plane, as vertical precision is not required so 3d positioning would introduce uneccesary complexity.
+```cpp
+float dist = glm::distance(
+    glm::vec2(playerPosition.x, playerPosition.z),
+    glm::vec2(targetPosition.x, targetPosition.z)
+);
+```
+Once the distacne falls below the specified trigger radius, the relevant interaction logic is executed. This keeps logic lightweight and predictable.  
+
+
+### Win Trigger
+
+The primary objective of the prototype is to find the ancient *Sith holocron* hidden within the cave. The artefact uses the proximity-based trigger system, where once the player is within the radius they are considered to have *found* the artefact and will win the game. This logic is triggered in the main update/render loop.
+```cpp
+if (CheckWinCondition(playerPosition, artefactTransform.transform, TRIGGER_RADIUS))
+{
+    std::cout << "\n=================================\n";
+    std::cout << " YOU FOUND THE ARTEFACT!\n";
+    std::cout << "        YOU WIN\n";
+    std::cout << "=================================\n";
+
+    glfwSetWindowShouldClose(window, true);
+}
+```
+Upon triggering the win condition, we print to the console to say that the artefact has been found, then it closes the window via `glfwSetWindowShouldClose()` function. This provdes feedback to the player that the gae has been won, then exits cleanly.  
+In addition to acting as the win trigger, the holocron also is rendered as visually distinct from its surrounding envornment, the artefact has a rotation animation applied each frame, creating a slow spinning motion. This helps it stand out as the objective without relying on UI indicators.  
+Rotation is applied during rendering by constructing a model matrix using the models world position and a `delta time` based rotation value.
+```cpp
+for (const auto& c : holocronPositions)
+{
+    float spinAngle = c.transform.rotationY + (currentFrame * -50.0f);
+    model = mat4(1.0f);
+    model = translate(model, LEVEL_OFFSET);
+    model = translate(model, c.transform.position);
+    model = rotate(model, radians(spinAngle), vec3(0, 1, 0));
+    model = scale(model, c.transform.scale);
+
+    SetMatrices(Shaders);
+    Holocron.Draw(Shaders);
+}
+```
+The animation presentation reinforces the importance of the artefact and draws the players attention.
+
+https://github.com/user-attachments/assets/4c27b9ce-07ad-4138-b2b5-70ca49605640
+
+
+### Collectable Coins
+
+Collectable coins are implemented using the same proximity-based interaction system. These coins are optional and are nto required to win the game. The coins are placed throughout the cave to ecourage exploration and provide a fun secondary objective to the protoytype. The coins also double as my personal signature as i have changed the texture on them to be my face, as evidenc ethat this prototype has been created and built by me.
+<img width="1277" height="749" alt="image" src="https://github.com/user-attachments/assets/35abec9a-66c0-4744-945b-2b6231ac130b" />  
+Each coin instance aintains its own state, inclusing a `collected` flag, when a player enters the radius of the coins, that coin is marked as collected, a global `COLLECTABLES_FOUND` is incremented and audio feedback is triggered. Coins are then visually removed from the worls by skipping their rendering once collected. 
+```cpp
+if (!c.collected)
+{
+    float spinAngle = currentFrame * 100.0f;
+    model = translate(mat4(1.0f), LEVEL_OFFSET + c.transform.position);
+    model = rotate(model, radians(spinAngle), vec3(0, 1, 0));
+    SetMatrices(Shaders);
+    Coin.Draw(Shaders);
+}
+```
+
+---
+
+## Audio Design
+
+Audio is used throughout the prototype to reinforce exploration, guide the player towards objectives and provide feedback on interaction. The audio system is built using **IrrKlang** and is integrated directly to the main update loop so that audio feedback responds immediately to triggers.
+
+### irrKlang Setup
+
+The irrKlang sound engine is created during initialisation and persists until the program terminates where its shut down properly to release its held resources.
+```cpp
+// Program initialisation
+ISoundEngine* soundEngine = createIrrKlangDevice();
+// Program termination
+soundEngine->drop();
+```
+If the engine fails to initialise, the prototype continues to run wihtout audio. Preventing a hard failure is audio hardware  or drivers are unavailable, ensuring the prototype remains playable in all environments. Failures are logged to the console for debugging purposes.  
+
+
+### 2D Sound Effects
+
+Collectable coin pickups use **2D audio** to provide immediate feedback when a coin is collected. Because the sound represents a UI-stype confirmation, positional audio is not required.
+```cpp
+soundEngine->play2D("audio/coin_pickup.wav", false);
+```
+Using 2D audio help keep feedback consistent and clear regardless of player orientation or position.  
+
+2D audio is also used for the background ambient sounds. Background sounds change dynamically based on player location to reinforce environmental transitions. This is also implemented using triggers, however for this one, while the player is within the trigger radius, encompassing the entire curated cave level, it will play the cave music, while outside of that radius it plays a lighter desert theme.
+```cpp
+{
+    vec2 playerXZ(playerPosition.x, playerPosition.z);
+    vec2 caveXZ(CAVE_ZONE_CENTER.x, CAVE_ZONE_CENTER.z);
+    bool nowInside = length(playerXZ - caveXZ) <= CAVE_TRIGGER_RADIUS;
+    if (nowInside && !isInsideCave)
+    {
+        isInsideCave = true;
+        if (outsideMusic)
+        {
+            outsideMusic->stop();
+            outsideMusic->drop();
+            outsideMusic = nullptr;
+        }
+
+        caveMusic = soundEngine->play2D("media/Audio/cave themeb4.ogg", true, false, true);
+        caveMusic->setVolume(0.8f);
+    }
+    if (!nowInside && isInsideCave)
+    {
+        isInsideCave = false;
+        if (caveMusic)
+        {
+            caveMusic->stop();
+            caveMusic->drop();
+            caveMusic = nullptr;
+        }
+
+        outsideMusic = soundEngine->play2D("media/Audio/caravan.ogg.ogg", true, false, true);
+        outsideMusic->setVolume(0.9f);
+    }
+}
+```
+When the player exits the cave, the flag changes back so the outside music resumesm and the cave music stops playing, ensuring that only one background track is active at a time, and behaviour remains predictable.
+
+https://github.com/user-attachments/assets/546249dc-bf9d-44ca-afff-fc7bf79ef682
+
+### 3D Positional Audio
+
+The *Sith holocron* emits a continuous 3D positional eerie whispering sound, reinforcing its mystical intrigue and importance, guiding the player towards it wihtout relying on UI indicatiors.
+The sound is placed at the location of the holocrons world position and played using irrKlangs 3D audio functuonality.
+```cpp
+artefactHum = soundEngine->play3D(
+    "media/Audio/whispering.wav",
+    vec3df(relicWorldPos.x, relicWorldPos.y, relicWorldPos.z),
+    true,    // loop
+    false,   // start immediately
+    true     // track sound
+);
+```
+The 3D positional audio allows the volume of the audio to increase as the pleyer moves closer towards the holocrom, again guiding them to the main objective.  
+To achieve this, we track the listeneer position every frame and irrKlang calculartes the distance from the £d sound location centerpoint.
+```cpp
+        soundEngine->setListenerPosition(vec3df(cameraPosition.x, cameraPosition.y, cameraPosition.z), vec3df(cameraFront.x, cameraFront.y, cameraFront.z));
+```  
+
+### Design Rationale
+
+Audio in the prototype is data-driven and reactive to the player input, tying audio feedback tot he players actions helps provde an immersive and atmospheric experience.
+Using a combination of 2D and 2D audio gives player guidance and rerinforces immersion.
+
+### 3D Positional Audio (Artefact Hum)
+
+*Explain the artefact hum and how it responds to distance.*
+- *Audio source placed at artefact world position.*
+- *Min/max distance values define attenuation range.*
+- *Listener position updated each frame to camera position.*
+
+### Dynamic Music Zones (Cave Trigger)
+
+*Explain music switching logic.*
+- *Distance check to cave zone centre.*
+- *On enter: stop outside track, start cave track.*
+- *On exit: stop cave track, start outside track.*
+- *Uses clean stop/drop to avoid overlap and resource leaks.*
+
+---
+
+## Game Programming Patterns and Structure
+
+This prototype follows a small number of clear and deliberate programming patterns aimed at maintaining control, readability, and stability within an unmanaged C++ OpenGL environment. Rather than relying on engine-level abstractions, patterns are implemented explicitly to keep behaviour transparent and easy to reason about.
+
+### Data-Driven Instancing
+
+Repeated environment assets (such as cave walls, platforms, and pillars) are placed using **data-driven instancing** rather than individual draw calls.  
+Each placed object is defined using an `InstanceTransform` struct containing position, rotation, and scale, with collections of these stored in `std::vector` containers per asset type.
+
+This allows:
+- reuse of a single model across many placements  
+- clean separation between asset data and rendering logic  
+- efficient iteration and layout changes without modifying draw code  
+
+### Separation of Responsibilities
+
+Although implemented within a single translation unit, systems are logically separated by responsibility:
+
+- **Rendering** – handled via shared draw helpers and shader programs  
+- **Movement & physics** – velocity-based movement, gravity, and constraints  
+- **Collision** – CPU-side collision using simplified meshes  
+- **Audio** – trigger-based 2D and 3D sound playback  
+
+Within the main loop, update logic (input, physics, collision, audio) is processed before rendering, ensuring predictable and deterministic behaviour each frame.
+
+### Explicit Collision Participation
+
+Collision handling uses an **explicit opt-in approach**.  
+Only meshes registered in collision groups are considered during wall collision checks, allowing decorative assets to exist without unnecessary collision overhead.
+
+Collision meshes are authored separately from visual geometry and reused across multiple instances, ensuring spatial consistency while keeping collision logic lightweight.
+
+### Proximity-Based Interaction Pattern
+
+All interactive behaviour in the prototype is driven using **distance-based proximity checks** rather than physics triggers or event systems.  
+This pattern is consistently applied for:
+- collectable coins  
+- the win condition (artefact)  
+- cave music transitions  
+
+Using a shared interaction model keeps gameplay logic simple, predictable, and easy to extend.
+
+### Lightweight Data Structures
+
+Gameplay and world logic rely on small, purpose-built structs rather than inheritance-heavy hierarchies. Examples include:
+- transform-only structs for world placement  
+- state-based structs for collectables  
+- grouped data for collision handling  
+
+This approach avoids unnecessary complexity while remaining flexible enough for expansion.
+
+### Debug Toggles for Development
+
+The prototype includes simple runtime toggles (e.g. gravity and collision enables) used during development and testing.  
+These allow systems to be isolated for debugging and environment inspection without altering core logic, reflecting standard development practice in iterative engine work.
+
+### Design Rationale
+
+These patterns prioritise:
+- clarity over abstraction  
+- explicit control in an unmanaged environment  
+- stability and debuggability  
+
+Together, they support a clean and understandable architecture while meeting the technical and educational goals of the COMP3016 module.
+
+
+---
+
+## Error Handling and Stability
+
+The prototype prioritises stability and predictable behaviour by explicitly handling common failure points and ensuring clean shutdown of external systems. Rather than assuming ideal runtime conditions, defensive checks are used throughout initialisation and execution to prevent crashes and undefined behaviour.
+
+### Window and Context Creation
+
+Window creation is validated immediately after attempting to initialise GLFW. If the window fails to instantiate, the program prints an error message and exits cleanly.
+
+```cpp
+GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "Oliver Cole", NULL, NULL);
+
+if (window == NULL)
+{
+    cout << "GLFW Window did not instantiate\n";
+    glfwTerminate();
+    return -1;
+}
+```
+This prevents further OpenGL calls from executing without a valid rendering context.  
+
+
+### OpenGL Function Loading(GLAD)
+OpenGL function pointers are loaded using GLAD after context creation. Failure to load GLAD results in early termination to avoid undefined behavioour when calling OpenGL functions.
+```cpp
+if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+{
+    cout << "GLAD failed to initialise\n";
+    return -1;
+}
+```
+
+
+### Audio System Initialisation (irrKlang)
+The audio engine is initialised independently of rendering and gameplay systems. If audio initialisation fails, the prototype continues to run without audio rather than terminating.
+```cpp
+soundEngine = createIrrKlangDevice();
+
+if (!soundEngine)
+{
+    std::cerr << "[AUDIO] Failed to initialise irrKlang\n";
+}
+else
+{
+    std::cout << "[AUDIO] irrKlang initialised successfully\n";
+}
+```
+This ensures the prototype remains playable even on systems without compatible audio hardware or drivers.  
+
+
+### Collision Mesh Loading
+Collision meshes are loaded at runtime using ASSIMP. If a collision mesh fails to load or contains no mesh data, the loader logs an error and returns an empty `CollisionMesh`.
+```cpp
+if (!scene || !scene->HasMeshes())
+{
+    std::cerr << "[COLLISION] Failed to load: " << path << std::endl;
+    return result;
+}
+```
+This prevents crashes due to invalid mesh access while still allowing the application to continue running.  
+
+
+### Defensive Gameplay Constraints
+Several hard constraints are enforced to prevent unstable gameplay states:
+- Terrain height clamping prevents falling through procedural terrain
+- Minimum cave height prevents infinite falling in interior spaces
+- Axis-separated wall collision avoids jitter and tunnelling
+Example of cave floor safety constraint:
+```cpp
+float absoluteMinY = PLAYER_MIN_HEIGHT + PLAYER_HEIGHT;
+
+if (nextPosition.y < absoluteMinY)
+{
+    nextPosition.y = absoluteMinY;
+    playerVelocity.y = 0.0f;
+}
+```
+These constraints prioritise consistent player experience over physical realism.  
+
+
+### Controlled Shutdown and Resource Cleanuo
+Before exiting, external systems are explicitly released to prevent resource leaks. The irrKlang engine is dropped and GLFW is terminated cleanly.
+```cpp
+if (soundEngine)
+{
+    soundEngine->drop();
+    soundEngine = nullptr;
+}
+
+glfwTerminate();
+```
+
+
+### Design and Rationale
+Error handling in this prototype is intentionally simple and explicit. The focus is on:
+- Avoiding hard crashes
+- Preventing undefined behaviour
+- Ensuring the prototype remains playable under failure conditions
+
+This approach is appropriate for a real-time OpenGL prototype and aligns with good practice when working in an unmanaged C++ environment.
+
+---
+
+## Testing and Validation
+
+Testing for this prototype was carried out through repeated runtime execution, targeted movement scenarios, and console-based validation. As this is a real-time OpenGL application without a unit testing framework, validation focused on confirming correct behaviour under normal use and edge-case conditions.
+
+### Terrain Collision Validation
+
+Terrain collision was validated by traversing the procedural desert at multiple locations and elevations. The player was repeatedly moved across steep slopes, flat regions, and noisy dune areas to ensure terrain height sampling correctly prevented the player from falling through the ground.
+
+Terrain collision is handled by sampling the terrain height at the player’s predicted next position:
+
+```cpp
+float terrainHeight = GetTerrainHeightFromInstance(
+    terrainBowl, nextPosition.x, nextPosition.z);
+```
+If the player is predicted to fall below the terrain surface, their position is clamped and vertical velocity reset:
+```cpp
+float minY = terrainHeight + PLAYER_HEIGHT;
+
+if (nextPosition.y < minY)
+{
+    nextPosition.y = minY;
+    playerVelocity.y = 0.0f;
+}
+```
+This behaviour was tested by:
+- Moving at high speed across uneven terrain
+- Approaching the cave entrance from multiple angles
+- Repeatedly descending and ascending the bowl interior  
+
+
+### Cave Interior Stability Testing
+The cave interior does not use a continuous terrain mesh. To validate stability in this area, repeated traversal tests were performed across uneven platform geometry and gaps between assets.  
+The global minimum height constraint was confirmed to prevent infinite falling.
+```cpp
+float absoluteMinY = PLAYER_MIN_HEIGHT + PLAYER_HEIGHT;
+
+if (nextPosition.y < absoluteMinY)
+{
+    nextPosition.y = absoluteMinY;
+    playerVelocity.y = 0.0f;
+}
+```
+This ensured the player remained within the intended cave world-space regardless of interior geometry variation.  
+
+
+### Wall Collision testing
+Wall collision was tested against cave walls, archways and pilars.
+Collision resolution was validated by moving into surfaces at different angles and speeds. Axis-separated collision resolution allowed the player to slide along walls rather than becoming stuck.
+```cpp
+if (ENABLE_COLLISIONS)
+{
+    // X axis
+    vec3 testX(nextPosition.x, playerPosition.y, playerPosition.z);
+
+    if (CheckWallCollision(testX, wallCollisionGroups, PLAYER_RADIUS, LEVEL_OFFSET))
+    {
+        nextPosition.x = playerPosition.x;
+    }
+
+    // Z axis
+    vec3 testZ(nextPosition.x, playerPosition.y, nextPosition.z);
+
+    if (CheckWallCollision(testZ, wallCollisionGroups, PLAYER_RADIUS, LEVEL_OFFSET))
+    {
+        nextPosition.z = playerPosition.z;
+    }
+}
+```
+Following this testing, I removed the _COL.obj for the archways, as they became impenetrable and the player needed to be able to walk through them.  
+
+
+###Collectable interaction Testing
+Collectable coins were tested by repeatedly entering and exiting their trigger radius from different directions. Each coin maintains its own collected state, ensuring it can only be collected once.
+```cpp
+if (CheckCollectableTrigger(playerPosition, c, COLLECTABLE_RADIUS))
+{
+    c.collected = true;
+    COLLECTABLES_FOUND++;
+    coinCollectSound = soundEngine->play2D("media/Audio/coins.wav", false);
+}
+```
+Validation included:
+- Confirming audio plays once per coin
+- Confirming collected coins are no longer rendered
+- Verifying COLLECTABLES_FOUND increments correctly
+
+Console output provided immediate confirmation during testing.  
+
+
+### Win Condition Testing
+The win condition was tested by approaching the artefact from multiple angles and distances. The trigger activates once the player enters the defined interaction radius.
+```cpp
+if (CheckWinCondition(playerPosition, artefactTransform.transform, TRIGGER_RADIUS))
+{
+    std::cout << "\n=================================\n";
+    std::cout << " YOU FOUND THE ARTEFACT!\n";
+    std::cout << "        YOU WIN\n";
+    std::cout << "=================================\n";
+
+    glfwSetWindowShouldClose(window, true);
+}
+```
+Testing confirmed:
+- The trigger fires reliably regardless of approach direction
+- The win message prints correctly to the console
+- The application exits cleanly after completion
+
+
+```
+[COLLECTABLE] Found 1 / 3
+[COLLECTABLE] Found 2 / 3
+
+=================================
+ YOU FOUND THE ARTEFACT!
+        YOU WIN
+=================================
+```
+
+---
+
+## Screenshots
+
+PCG Desert terrain
+<img width="1282" height="753" alt="image" src="https://github.com/user-attachments/assets/562804d1-d8d4-4d16-af24-df5df5fb7d2a" />
+Cave exterior
+<img width="1284" height="756" alt="image" src="https://github.com/user-attachments/assets/3a49d0c2-40af-4ed7-b64c-b61c29b1df15" />
+Cave interior
+<img width="1281" height="754" alt="image" src="https://github.com/user-attachments/assets/73a988ed-8299-4379-8a2c-c909c4f7eea9" />
+Coin
+<img width="1277" height="749" alt="image" src="https://github.com/user-attachments/assets/35abec9a-66c0-4744-945b-2b6231ac130b" />
+Holocron
+
+https://github.com/user-attachments/assets/4c27b9ce-07ad-4138-b2b5-70ca49605640
+
+Blender scene layout
+<img width="1891" height="880" alt="image" src="https://github.com/user-attachments/assets/8f1d6734-deec-4c18-a81c-0bcd0754393e" />
+
+---
+
+## Use of AI
+
+Write this as a transparent declaration with conrete examples  
+- What AI helped with (e.g., explaining approaches, debugging ideas, planning).
+- What AI did NOT do (e.g., did not produce final submitted code wholesale).
+- Examples (be specific):
+  - Discussed collision approach options (circle vs AABB vs ray tests).
+  - Helped describe gravity + terrain collision in report form.
+  - Helped plan structure of the README/report.
+
+---
+
+## Evaluation
+
+### What I Achieved
+Summarise your outcomes relative to the proposal.
+- Exploration prototype complete
+- Terrain generation implemented
+- Model loading and instancing
+- Collision and physics working
+- Audio system implemented
+
+### What Worked Well
+
+Reflect on strengths and why they’re good.
+- Stable movement and collision
+- Terrain shaping guides player
+- Audio improves atmosphere
+
+### Limitations
+
+Be honest but framed professionally.
+- No dynamic lighting (if not implemented)
+- Simplified collision (XZ-only, no true triangle sweep)
+- No UI for collectables (console output only)
+
+### Future Improvements
+
+Show you understand what’s next.
+- Mesh-based floor collision inside cave
+- Better collision response (push-out vectors)
+- UI HUD for collectables
+- Lighting system (directional light, fog, tone)
+
+---
+
+## Conclusion
+
+Close with a concise paragraph:  
+- What the prototype deomnstrates (OpenGL rendering, progedural geometry, interaction)
+- How it alligns with the COMP3016 goals
+- What i learnt
+
+
 
 
 
